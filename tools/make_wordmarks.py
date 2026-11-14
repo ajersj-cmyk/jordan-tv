@@ -229,6 +229,7 @@ SPECS = [
  ("anime","Toonami Anime","ANIME","",WHITE,(20,15,70),(255,120,0),e_planet),
  ("saturday-morning","Retro Saturday Morning","SAT MORNING","",WHITE,(30,60,160),(255,200,0),e_sun),
  ("preschool","Preschool","PRESCHOOL","",(255,225,70),(110,30,140),(255,95,120),e_blocks),
+ ("90s-classics","90s Classics","90s CLASSICS","",(255,220,70),(70,15,120),(255,90,180),e_popcorn),
 ]
 
 def fit(text, maxw, maxh):
