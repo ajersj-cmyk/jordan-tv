@@ -1,0 +1,1776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jordan TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #07010f; color: #e8fbff; font-family: Barlow, sans-serif; }
+  button, input { font: inherit; color: inherit; }
+  button { background: none; border: 0; cursor: pointer; }
+  #app { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+  #app-inner { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }
+  .top { position: relative; display: flex; flex: none; height: 26vh; min-height: 176px; gap: 8px; padding: 8px 8px 4px; align-items: stretch; }
+  .frame { width: 32%; flex: none; min-width: 180px; height: 100%; border: 3px solid #3df0ff; background: #000; position: relative; box-shadow: 0 0 10px #3df0ff, 0 0 16px #ff2bd6, inset 0 0 16px rgba(61,240,255,.28); }
+  .info { position: relative; flex: 1; min-width: 0; display: block; padding: 12px 14px 10px; background: #07010f; border: 2px solid #3df0ff; box-shadow: 0 0 12px #3df0ff, inset 0 0 14px rgba(255,43,214,.28); overflow: hidden; }
+  .info-top { display: block; min-width: 0; padding-right: 130px; }
+  .chline { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Barlow Condensed", sans-serif; font-size: 20px; letter-spacing: 0.04em; text-transform: uppercase; color: #3df0ff; text-shadow: 0 0 8px #3df0ff; }
+  .info .clock { position: absolute; top: 12px; right: 14px; font-family: "Barlow Condensed", sans-serif; font-size: 22px; line-height: 1; color: #3df0ff; text-shadow: 0 0 8px #3df0ff; background: #07010f; padding-left: 10px; }
+  .info .mark { height: 40px; width: auto; max-width: 132px; object-fit: contain; background: #07010f; }
+  .showname { display: block; margin-top: 10px; overflow: hidden; white-space: normal; font-family: "Barlow Condensed", sans-serif; font-size: 26px; line-height: 1.1; font-weight: 700; color: #fff; text-shadow: -1px -1px 0 #ff2bd6, 1px -1px 0 #ff2bd6, -1px 1px 0 #ff2bd6, 1px 1px 0 #ff2bd6, 0 0 8px #ff2bd6; }
+  .when, .next, .hint { display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .when { color: #ff2bd6; font-family: "Barlow Condensed", sans-serif; font-size: 18px; }
+  .next { color: #e8fbff; font-size: 16px; }
+  .hint { color: #9eb0c8; font-size: 14px; }
+  .info-foot { display: block; margin-top: 8px; overflow: hidden; }
+  .info-foot .hint { display: inline; }
+  .info-foot .mark { float: right; }
+  #stage { position: fixed; z-index: 3; overflow: hidden; background: #000; }
+  body.is-full #app { visibility: hidden; }
+  body.is-full #stage { left: 0; top: 0; width: 100vw; height: 100vh; z-index: 40; }
+  body.is-air #app { visibility: hidden; }
+  body.is-air #stage { left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 40; }
+  #stage, #stage video, video { outline: none; }
+  #stage video { width: 100%; height: 100%; object-fit: cover; object-position: left center; background: #000; display: block; opacity: 0; }
+  #stage video.live { opacity: 1; }
+  #stage video::-webkit-media-controls, #stage video::-webkit-media-controls-enclosure, #stage video::-webkit-media-controls-panel, #stage video::-webkit-media-controls-play-button, #stage video::-webkit-media-controls-start-playback-button { display: none !important; opacity: 0; }
+  #stage-cover { position: absolute; inset: 0; background: #000 center/cover no-repeat; }
+  .hit.pick, button.pick, .pick { background: #ff2bd6; color: #07010f; outline: 3px solid #3df0ff; box-shadow: 0 0 16px #ff2bd6; }
+  .playtag { position: absolute; left: 8px; bottom: 8px; background: rgba(0,0,0,.75); padding: 4px 8px; font-family: "Barlow Condensed", sans-serif; font-size: 18px; }
+  .frame iframe, .frame img { width: 100%; height: 100%; border: 0; display: block; object-fit: cover; }
+  .guide { flex: 1; min-height: 0; overflow: auto; background: #07010f; }
+  .times, .row { display: flex; align-items: stretch; min-width: max-content; }
+  .lane { display: flex; height: auto; min-height: 40px; position: relative; align-items: center; }
+  .block { flex: 0 0 auto; overflow: hidden; }
+  .times { position: sticky; top: 0; background: #07010f; z-index: 8; color: #3df0ff; text-shadow: 0 0 8px #3df0ff; }
+  .times span, .cell { min-width: 0; padding: 6px 10px; border-left: 1px solid rgba(61,240,255,.28); overflow: hidden; white-space: nowrap; }
+  .times span:first-child, .cell:first-child { border-left: 0; }
+  .banner { min-width: 0; overflow: hidden; padding: 4px 12px; font-style: italic; border-top: 1px solid rgba(255,43,214,.45); color: #ffd6f6; white-space: nowrap; }
+  .row { width: max-content; text-align: left; min-height: 68px; border-top: 1px solid rgba(61,240,255,.22); background: #100318; }
+  .row.on { background: #1a0830; box-shadow: inset 4px 0 0 #ff2bd6; }
+  .cell.slot.pick { background: #2a0a3a; color: #e8fbff; box-shadow: inset 0 0 0 2px #3df0ff, 0 0 10px #3df0ff; }
+  .ch-id { display: flex; align-items: center; gap: 8px; width: 300px; height: 68px; flex: none; min-width: 0; overflow: hidden; position: sticky; left: 0; z-index: 2; background: #100318; white-space: normal; }
+  .row.on .ch-id { background: #1a0830; }
+  .times .ch-id { z-index: 9; background: #07010f; }
+  .ch-logo { flex: 1; width: auto; height: 52px; max-width: 240px; object-fit: contain; object-position: left center; }
+  .ch-id .id { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; min-width: 0; max-width: 100%; }
+  .ch-id b { flex: none; font-family: "Barlow Condensed", sans-serif; font-size: 28px; font-weight: 700; line-height: 1; color: #3df0ff; text-shadow: 0 0 6px #3df0ff; }
+  .ch-id small { flex: 1; min-width: 90px; overflow: hidden; white-space: normal; font-size: 22px; font-weight: 700; line-height: 1.05; letter-spacing: 0.02em; text-transform: uppercase; color: #fff; text-shadow: -1px -1px 0 #ff2bd6, 1px -1px 0 #ff2bd6, -1px 1px 0 #ff2bd6, 1px 1px 0 #ff2bd6, 0 0 8px #ff2bd6; }
+  .card .ch { display: block; overflow: hidden; font-size: 18px; line-height: 1.1; letter-spacing: 0.04em; text-transform: uppercase; color: #ff2bd6; white-space: nowrap; }
+  .title { overflow: hidden; font-family: "Barlow Condensed", sans-serif; font-size: 16px; font-weight: 700; }
+  .cell.title { white-space: normal; display: flex; align-items: center; line-height: 1.15; color: #3df0ff; text-shadow: 0 0 6px #3df0ff; }
+  .cell.title .name { display: block; white-space: normal; line-height: 1.15; }
+  .title.block { flex: 0 0 auto; }
+  .roll { display: block; overflow: hidden; min-width: 0; white-space: nowrap; }
+  .roll > span { display: inline-block; white-space: nowrap; }
+  .roll.on > span { animation: crawl 11s linear infinite; }
+  @keyframes crawl { 0%, 18% { transform: translateX(0); } 82%, 100% { transform: translateX(calc(-1 * var(--shift))); } }
+  .bar { display: flex; flex: none; flex-wrap: wrap; gap: 4px; background: #07010f; padding: 4px 8px; border-top: 1px solid #3df0ff; }
+  .bar.on { background: #1a0830; box-shadow: 0 0 12px #ff2bd6; }
+  .bar.on button { background: #ff2bd6; color: #07010f; box-shadow: 0 0 10px #ff2bd6; }
+  .bar button { min-height: 44px; padding: 0 12px; color: #3df0ff; }
+  .shade { position: fixed; inset: 0; z-index: 20; background: rgba(7,1,15,.92); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .sheet { width: min(520px, 100%); max-height: 86vh; overflow: auto; background: #100318; border: 2px solid #ff2bd6; box-shadow: 0 0 18px #3df0ff; padding: 16px; }
+  .qr { width: 168px; height: 168px; background: #fff; padding: 8px; margin: 10px 0; }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .sheet h2 { margin: 0; font-family: "Barlow Condensed", sans-serif; font-size: 32px; font-weight: 500; }
+  .sheet p { color: #9eb0c8; }
+  .sheet input, .sheet textarea { width: 100%; margin-top: 8px; background: #05080f; border: 1px solid #1c3d5e; padding: 12px; }
+  .sheet .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .go { background: #f4f7fb; color: #071018; min-height: 44px; padding: 0 16px; }
+  .hit { display: block; width: 100%; text-align: left; padding: 8px 0; border-top: 1px solid #1c3d5e; }
+  .full { position: fixed; inset: 0; background: #000; z-index: 5; display: flex; flex-direction: column; }
+  .full iframe { flex: 1; width: 100%; border: 0; }
+  .err { color: #f4f7fb; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="app"></div>
+<script>
+var qrcode=function(){function i(t,r){function a(t,r){g=function(t){for(var r=new Array(t),e=0;e<t;e+=1){r[e]=new Array(t);for(var n=0;n<t;n+=1)r[e][n]=null}return r}(l=4*u+17),e(0,0),e(l-7,0),e(0,l-7),i(),o(),v(t,r),7<=u&&h(t),null==n&&(n=w(u,f,c)),d(n,r)}var u=t,f=y[r],g=null,l=0,n=null,c=[],s={},e=function(t,r){for(var e=-1;e<=7;e+=1)if(!(t+e<=-1||l<=t+e))for(var n=-1;n<=7;n+=1)r+n<=-1||l<=r+n||(g[t+e][r+n]=0<=e&&e<=6&&(0==n||6==n)||0<=n&&n<=6&&(0==e||6==e)||2<=e&&e<=4&&2<=n&&n<=4)},o=function(){for(var t=8;t<l-8;t+=1)null==g[t][6]&&(g[t][6]=t%2==0);for(var r=8;r<l-8;r+=1)null==g[6][r]&&(g[6][r]=r%2==0)},i=function(){for(var t=B.getPatternPosition(u),r=0;r<t.length;r+=1)for(var e=0;e<t.length;e+=1){var n=t[r],o=t[e];if(null==g[n][o])for(var i=-2;i<=2;i+=1)for(var a=-2;a<=2;a+=1)g[n+i][o+a]=-2==i||2==i||-2==a||2==a||0==i&&0==a}},h=function(t){for(var r=B.getBCHTypeNumber(u),e=0;e<18;e+=1){var n=!t&&1==(r>>e&1);g[Math.floor(e/3)][e%3+l-8-3]=n}for(e=0;e<18;e+=1){n=!t&&1==(r>>e&1);g[e%3+l-8-3][Math.floor(e/3)]=n}},v=function(t,r){for(var e=f<<3|r,n=B.getBCHTypeInfo(e),o=0;o<15;o+=1){var i=!t&&1==(n>>o&1);o<6?g[o][8]=i:o<8?g[o+1][8]=i:g[l-15+o][8]=i}for(o=0;o<15;o+=1){i=!t&&1==(n>>o&1);o<8?g[8][l-o-1]=i:o<9?g[8][15-o-1+1]=i:g[8][15-o-1]=i}g[l-8][8]=!t},d=function(t,r){for(var e=-1,n=l-1,o=7,i=0,a=B.getMaskFunction(r),u=l-1;0<u;u-=2)for(6==u&&(u-=1);;){for(var f=0;f<2;f+=1)if(null==g[n][u-f]){var c=!1;i<t.length&&(c=1==(t[i]>>>o&1)),a(n,u-f)&&(c=!c),g[n][u-f]=c,-1==(o-=1)&&(i+=1,o=7)}if((n+=e)<0||l<=n){n-=e,e=-e;break}}},w=function(t,r,e){for(var n=b.getRSBlocks(t,r),o=M(),i=0;i<e.length;i+=1){var a=e[i];o.put(a.getMode(),4),o.put(a.getLength(),B.getLengthInBits(a.getMode(),t)),a.write(o)}var u=0;for(i=0;i<n.length;i+=1)u+=n[i].dataCount;if(o.getLengthInBits()>8*u)throw"code length overflow. ("+o.getLengthInBits()+">"+8*u+")";for(o.getLengthInBits()+4<=8*u&&o.put(0,4);o.getLengthInBits()%8!=0;)o.putBit(!1);for(;!(o.getLengthInBits()>=8*u||(o.put(236,8),o.getLengthInBits()>=8*u));)o.put(17,8);return function(t,r){for(var e=0,n=0,o=0,i=new Array(r.length),a=new Array(r.length),u=0;u<r.length;u+=1){var f=r[u].dataCount,c=r[u].totalCount-f;n=Math.max(n,f),o=Math.max(o,c),i[u]=new Array(f);for(var g=0;g<i[u].length;g+=1)i[u][g]=255&t.getBuffer()[g+e];e+=f;var l=B.getErrorCorrectPolynomial(c),h=C(i[u],l.getLength()-1).mod(l);a[u]=new Array(l.getLength()-1);for(g=0;g<a[u].length;g+=1){var s=g+h.getLength()-a[u].length;a[u][g]=0<=s?h.getAt(s):0}}var v=0;for(g=0;g<r.length;g+=1)v+=r[g].totalCount;var d=new Array(v),w=0;for(g=0;g<n;g+=1)for(u=0;u<r.length;u+=1)g<i[u].length&&(d[w]=i[u][g],w+=1);for(g=0;g<o;g+=1)for(u=0;u<r.length;u+=1)g<a[u].length&&(d[w]=a[u][g],w+=1);return d}(o,n)};s.addData=function(t,r){var e=null;switch(r=r||"Byte"){case"Numeric":e=x(t);break;case"Alphanumeric":e=m(t);break;case"Byte":e=L(t);break;case"Kanji":e=D(t);break;default:throw"mode:"+r}c.push(e),n=null},s.isDark=function(t,r){if(t<0||l<=t||r<0||l<=r)throw t+","+r;return g[t][r]},s.getModuleCount=function(){return l},s.make=function(){if(u<1){for(var t=1;t<40;t++){for(var r=b.getRSBlocks(t,f),e=M(),n=0;n<c.length;n++){var o=c[n];e.put(o.getMode(),4),e.put(o.getLength(),B.getLengthInBits(o.getMode(),t)),o.write(e)}var i=0;for(n=0;n<r.length;n++)i+=r[n].dataCount;if(e.getLengthInBits()<=8*i)break}u=t}a(!1,function(){for(var t=0,r=0,e=0;e<8;e+=1){a(!0,e);var n=B.getLostPoint(s);(0==e||n<t)&&(t=n,r=e)}return r}())},s.createTableTag=function(t,r){t=t||2;var e="";e+='<table style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: "+(r=void 0===r?4*t:r)+"px;",e+='">',e+="<tbody>";for(var n=0;n<s.getModuleCount();n+=1){e+="<tr>";for(var o=0;o<s.getModuleCount();o+=1)e+='<td style="',e+=" border-width: 0px; border-style: none;",e+=" border-collapse: collapse;",e+=" padding: 0px; margin: 0px;",e+=" width: "+t+"px;",e+=" height: "+t+"px;",e+=" background-color: ",e+=s.isDark(n,o)?"#000000":"#ffffff",e+=";",e+='"/>';e+="</tr>"}return e+="</tbody>",e+="</table>"},s.createSvgTag=function(t,r,e,n){var o={};"object"==typeof t&&(t=(o=t).cellSize,r=o.margin,e=o.alt,n=o.title),t=t||2,r=void 0===r?4*t:r,(e="string"==typeof e?{text:e}:e||{}).text=e.text||null,e.id=e.text?e.id||"qrcode-description":null,(n="string"==typeof n?{text:n}:n||{}).text=n.text||null,n.id=n.text?n.id||"qrcode-title":null;var i,a,u,f,c=s.getModuleCount()*t+2*r,g="";for(f="l"+t+",0 0,"+t+" -"+t+",0 0,-"+t+"z ",g+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',g+=o.scalable?"":' width="'+c+'px" height="'+c+'px"',g+=' viewBox="0 0 '+c+" "+c+'" ',g+=' preserveAspectRatio="xMinYMin meet"',g+=n.text||e.text?' role="img" aria-labelledby="'+p([n.id,e.id].join(" ").trim())+'"':"",g+=">",g+=n.text?'<title id="'+p(n.id)+'">'+p(n.text)+"</title>":"",g+=e.text?'<description id="'+p(e.id)+'">'+p(e.text)+"</description>":"",g+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',g+='<path d="',a=0;a<s.getModuleCount();a+=1)for(u=a*t+r,i=0;i<s.getModuleCount();i+=1)s.isDark(a,i)&&(g+="M"+(i*t+r)+","+u+f);return g+='" stroke="transparent" fill="black"/>',g+="</svg>"},s.createDataURL=function(o,t){o=o||2,t=void 0===t?4*o:t;var r=s.getModuleCount()*o+2*t,i=t,a=r-t;return I(r,r,function(t,r){if(i<=t&&t<a&&i<=r&&r<a){var e=Math.floor((t-i)/o),n=Math.floor((r-i)/o);return s.isDark(n,e)?0:1}return 1})},s.createImgTag=function(t,r,e){t=t||2,r=void 0===r?4*t:r;var n=s.getModuleCount()*t+2*r,o="";return o+="<img",o+=' src="',o+=s.createDataURL(t,r),o+='"',o+=' width="',o+=n,o+='"',o+=' height="',o+=n,o+='"',e&&(o+=' alt="',o+=p(e),o+='"'),o+="/>"};var p=function(t){for(var r="",e=0;e<t.length;e+=1){var n=t.charAt(e);switch(n){case"<":r+="&lt;";break;case">":r+="&gt;";break;case"&":r+="&amp;";break;case'"':r+="&quot;";break;default:r+=n}}return r};return s.createASCII=function(t,r){if((t=t||1)<2)return function(t){t=void 0===t?2:t;var r,e,n,o,i,a=1*s.getModuleCount()+2*t,u=t,f=a-t,c={"██":"█","█ ":"▀"," █":"▄","  ":" "},g={"██":"▀","█ ":"▀"," █":" ","  ":" "},l="";for(r=0;r<a;r+=2){for(n=Math.floor((r-u)/1),o=Math.floor((r+1-u)/1),e=0;e<a;e+=1)i="█",u<=e&&e<f&&u<=r&&r<f&&s.isDark(n,Math.floor((e-u)/1))&&(i=" "),u<=e&&e<f&&u<=r+1&&r+1<f&&s.isDark(o,Math.floor((e-u)/1))?i+=" ":i+="█",l+=t<1&&f<=r+1?g[i]:c[i];l+="\n"}return a%2&&0<t?l.substring(0,l.length-a-1)+Array(1+a).join("▀"):l.substring(0,l.length-1)}(r);t-=1,r=void 0===r?2*t:r;var e,n,o,i,a=s.getModuleCount()*t+2*r,u=r,f=a-r,c=Array(t+1).join("██"),g=Array(t+1).join("  "),l="",h="";for(e=0;e<a;e+=1){for(o=Math.floor((e-u)/t),h="",n=0;n<a;n+=1)i=1,u<=n&&n<f&&u<=e&&e<f&&s.isDark(o,Math.floor((n-u)/t))&&(i=0),h+=i?c:g;for(o=0;o<t;o+=1)l+=h+"\n"}return l.substring(0,l.length-1)},s.renderTo2dContext=function(t,r){r=r||2;for(var e=s.getModuleCount(),n=0;n<e;n++)for(var o=0;o<e;o++)t.fillStyle=s.isDark(n,o)?"black":"white",t.fillRect(n*r,o*r,r,r)},s}i.stringToBytes=(i.stringToBytesFuncs={default:function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);r.push(255&n)}return r}}).default,i.createStringToBytes=function(u,f){var i=function(){function t(){var t=r.read();if(-1==t)throw"eof";return t}for(var r=S(u),e=0,n={};;){var o=r.read();if(-1==o)break;var i=t(),a=t()<<8|t();n[String.fromCharCode(o<<8|i)]=a,e+=1}if(e!=f)throw e+" != "+f;return n}(),a="?".charCodeAt(0);return function(t){for(var r=[],e=0;e<t.length;e+=1){var n=t.charCodeAt(e);if(n<128)r.push(n);else{var o=i[t.charAt(e)];"number"==typeof o?(255&o)==o?r.push(o):(r.push(o>>>8),r.push(255&o)):r.push(a)}}return r}};var r,t,a=1,u=2,o=4,f=8,y={L:1,M:0,Q:3,H:2},e=0,n=1,c=2,g=3,l=4,h=5,s=6,v=7,B=(r=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],(t={}).getBCHTypeInfo=function(t){for(var r=t<<10;0<=d(r)-d(1335);)r^=1335<<d(r)-d(1335);return 21522^(t<<10|r)},t.getBCHTypeNumber=function(t){for(var r=t<<12;0<=d(r)-d(7973);)r^=7973<<d(r)-d(7973);return t<<12|r},t.getPatternPosition=function(t){return r[t-1]},t.getMaskFunction=function(t){switch(t){case e:return function(t,r){return(t+r)%2==0};case n:return function(t,r){return t%2==0};case c:return function(t,r){return r%3==0};case g:return function(t,r){return(t+r)%3==0};case l:return function(t,r){return(Math.floor(t/2)+Math.floor(r/3))%2==0};case h:return function(t,r){return t*r%2+t*r%3==0};case s:return function(t,r){return(t*r%2+t*r%3)%2==0};case v:return function(t,r){return(t*r%3+(t+r)%2)%2==0};default:throw"bad maskPattern:"+t}},t.getErrorCorrectPolynomial=function(t){for(var r=C([1],0),e=0;e<t;e+=1)r=r.multiply(C([1,w.gexp(e)],0));return r},t.getLengthInBits=function(t,r){if(1<=r&&r<10)switch(t){case a:return 10;case u:return 9;case o:case f:return 8;default:throw"mode:"+t}else if(r<27)switch(t){case a:return 12;case u:return 11;case o:return 16;case f:return 10;default:throw"mode:"+t}else{if(!(r<41))throw"type:"+r;switch(t){case a:return 14;case u:return 13;case o:return 16;case f:return 12;default:throw"mode:"+t}}},t.getLostPoint=function(t){for(var r=t.getModuleCount(),e=0,n=0;n<r;n+=1)for(var o=0;o<r;o+=1){for(var i=0,a=t.isDark(n,o),u=-1;u<=1;u+=1)if(!(n+u<0||r<=n+u))for(var f=-1;f<=1;f+=1)o+f<0||r<=o+f||0==u&&0==f||a==t.isDark(n+u,o+f)&&(i+=1);5<i&&(e+=3+i-5)}for(n=0;n<r-1;n+=1)for(o=0;o<r-1;o+=1){var c=0;t.isDark(n,o)&&(c+=1),t.isDark(n+1,o)&&(c+=1),t.isDark(n,o+1)&&(c+=1),t.isDark(n+1,o+1)&&(c+=1),0!=c&&4!=c||(e+=3)}for(n=0;n<r;n+=1)for(o=0;o<r-6;o+=1)t.isDark(n,o)&&!t.isDark(n,o+1)&&t.isDark(n,o+2)&&t.isDark(n,o+3)&&t.isDark(n,o+4)&&!t.isDark(n,o+5)&&t.isDark(n,o+6)&&(e+=40);for(o=0;o<r;o+=1)for(n=0;n<r-6;n+=1)t.isDark(n,o)&&!t.isDark(n+1,o)&&t.isDark(n+2,o)&&t.isDark(n+3,o)&&t.isDark(n+4,o)&&!t.isDark(n+5,o)&&t.isDark(n+6,o)&&(e+=40);var g=0;for(o=0;o<r;o+=1)for(n=0;n<r;n+=1)t.isDark(n,o)&&(g+=1);return e+=Math.abs(100*g/r/r-50)/5*10},t);function d(t){for(var r=0;0!=t;)r+=1,t>>>=1;return r}var w=function(){for(var r=new Array(256),e=new Array(256),t=0;t<8;t+=1)r[t]=1<<t;for(t=8;t<256;t+=1)r[t]=r[t-4]^r[t-5]^r[t-6]^r[t-8];for(t=0;t<255;t+=1)e[r[t]]=t;var n={glog:function(t){if(t<1)throw"glog("+t+")";return e[t]},gexp:function(t){for(;t<0;)t+=255;for(;256<=t;)t-=255;return r[t]}};return n}();function C(n,o){if(void 0===n.length)throw n.length+"/"+o;var r=function(){for(var t=0;t<n.length&&0==n[t];)t+=1;for(var r=new Array(n.length-t+o),e=0;e<n.length-t;e+=1)r[e]=n[e+t];return r}(),i={getAt:function(t){return r[t]},getLength:function(){return r.length},multiply:function(t){for(var r=new Array(i.getLength()+t.getLength()-1),e=0;e<i.getLength();e+=1)for(var n=0;n<t.getLength();n+=1)r[e+n]^=w.gexp(w.glog(i.getAt(e))+w.glog(t.getAt(n)));return C(r,0)},mod:function(t){if(i.getLength()-t.getLength()<0)return i;for(var r=w.glog(i.getAt(0))-w.glog(t.getAt(0)),e=new Array(i.getLength()),n=0;n<i.getLength();n+=1)e[n]=i.getAt(n);for(n=0;n<t.getLength();n+=1)e[n]^=w.gexp(w.glog(t.getAt(n))+r);return C(e,0).mod(t)}};return i}function p(){var e=[],o={writeByte:function(t){e.push(255&t)},writeShort:function(t){o.writeByte(t),o.writeByte(t>>>8)},writeBytes:function(t,r,e){r=r||0,e=e||t.length;for(var n=0;n<e;n+=1)o.writeByte(t[n+r])},writeString:function(t){for(var r=0;r<t.length;r+=1)o.writeByte(t.charCodeAt(r))},toByteArray:function(){return e},toString:function(){var t="";t+="[";for(var r=0;r<e.length;r+=1)0<r&&(t+=","),t+=e[r];return t+="]"}};return o}var k,A,b=(k=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],(A={}).getRSBlocks=function(t,r){var e=function(t,r){switch(r){case y.L:return k[4*(t-1)+0];case y.M:return k[4*(t-1)+1];case y.Q:return k[4*(t-1)+2];case y.H:return k[4*(t-1)+3];default:return}}(t,r);if(void 0===e)throw"bad rs block @ typeNumber:"+t+"/errorCorrectionLevel:"+r;for(var n,o,i=e.length/3,a=[],u=0;u<i;u+=1)for(var f=e[3*u+0],c=e[3*u+1],g=e[3*u+2],l=0;l<f;l+=1)a.push((n=g,o=void 0,(o={}).totalCount=c,o.dataCount=n,o));return a},A),M=function(){var e=[],n=0,o={getBuffer:function(){return e},getAt:function(t){var r=Math.floor(t/8);return 1==(e[r]>>>7-t%8&1)},put:function(t,r){for(var e=0;e<r;e+=1)o.putBit(1==(t>>>r-e-1&1))},getLengthInBits:function(){return n},putBit:function(t){var r=Math.floor(n/8);e.length<=r&&e.push(0),t&&(e[r]|=128>>>n%8),n+=1}};return o},x=function(t){var r=a,n=t,e={getMode:function(){return r},getLength:function(t){return n.length},write:function(t){for(var r=n,e=0;e+2<r.length;)t.put(o(r.substring(e,e+3)),10),e+=3;e<r.length&&(r.length-e==1?t.put(o(r.substring(e,e+1)),4):r.length-e==2&&t.put(o(r.substring(e,e+2)),7))}},o=function(t){for(var r=0,e=0;e<t.length;e+=1)r=10*r+i(t.charAt(e));return r},i=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);throw"illegal char :"+t};return e},m=function(t){var r=u,n=t,e={getMode:function(){return r},getLength:function(t){return n.length},write:function(t){for(var r=n,e=0;e+1<r.length;)t.put(45*o(r.charAt(e))+o(r.charAt(e+1)),11),e+=2;e<r.length&&t.put(o(r.charAt(e)),6)}},o=function(t){if("0"<=t&&t<="9")return t.charCodeAt(0)-"0".charCodeAt(0);if("A"<=t&&t<="Z")return t.charCodeAt(0)-"A".charCodeAt(0)+10;switch(t){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+t}};return e},L=function(t){var r=o,e=i.stringToBytes(t),n={getMode:function(){return r},getLength:function(t){return e.length},write:function(t){for(var r=0;r<e.length;r+=1)t.put(e[r],8)}};return n},D=function(t){var r=f,e=i.stringToBytesFuncs.SJIS;if(!e)throw"sjis not supported.";!function(){var t=e("友");if(2!=t.length||38726!=(t[0]<<8|t[1]))throw"sjis not supported."}();var o=e(t),n={getMode:function(){return r},getLength:function(t){return~~(o.length/2)},write:function(t){for(var r=o,e=0;e+1<r.length;){var n=(255&r[e])<<8|255&r[e+1];if(33088<=n&&n<=40956)n-=33088;else{if(!(57408<=n&&n<=60351))throw"illegal char at "+(e+1)+"/"+n;n-=49472}n=192*(n>>>8&255)+(255&n),t.put(n,13),e+=2}if(e<r.length)throw"illegal char at "+(e+1)}};return n},S=function(t){var e=t,n=0,o=0,i=0,r={read:function(){for(;i<8;){if(n>=e.length){if(0==i)return-1;throw"unexpected end of file./"+i}var t=e.charAt(n);if(n+=1,"="==t)return i=0,-1;t.match(/^\s$/)||(o=o<<6|a(t.charCodeAt(0)),i+=6)}var r=o>>>i-8&255;return i-=8,r}},a=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(43==t)return 62;if(47==t)return 63;throw"c:"+t};return r},I=function(t,r,e){for(var n=function(t,r){var n=t,o=r,l=new Array(t*r),e={setPixel:function(t,r,e){l[r*n+t]=e},write:function(t){t.writeString("GIF87a"),t.writeShort(n),t.writeShort(o),t.writeByte(128),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(0),t.writeByte(255),t.writeByte(255),t.writeByte(255),t.writeString(","),t.writeShort(0),t.writeShort(0),t.writeShort(n),t.writeShort(o),t.writeByte(0);var r=i(2);t.writeByte(2);for(var e=0;255<r.length-e;)t.writeByte(255),t.writeBytes(r,e,255),e+=255;t.writeByte(r.length-e),t.writeBytes(r,e,r.length-e),t.writeByte(0),t.writeString(";")}},i=function(t){for(var r=1<<t,e=1+(1<<t),n=t+1,o=h(),i=0;i<r;i+=1)o.add(String.fromCharCode(i));o.add(String.fromCharCode(r)),o.add(String.fromCharCode(e));var a=p(),u=function(t){var e=t,n=0,o=0,r={write:function(t,r){if(t>>>r!=0)throw"length over";for(;8<=n+r;)e.writeByte(255&(t<<n|o)),r-=8-n,t>>>=8-n,n=o=0;o|=t<<n,n+=r},flush:function(){0<n&&e.writeByte(o)}};return r}(a);u.write(r,n);var f=0,c=String.fromCharCode(l[f]);for(f+=1;f<l.length;){var g=String.fromCharCode(l[f]);f+=1,o.contains(c+g)?c+=g:(u.write(o.indexOf(c),n),o.size()<4095&&(o.size()==1<<n&&(n+=1),o.add(c+g)),c=g)}return u.write(o.indexOf(c),n),u.write(e,n),u.flush(),a.toByteArray()},h=function(){var r={},e=0,n={add:function(t){if(n.contains(t))throw"dup key:"+t;r[t]=e,e+=1},size:function(){return e},indexOf:function(t){return r[t]},contains:function(t){return void 0!==r[t]}};return n};return e}(t,r),o=0;o<r;o+=1)for(var i=0;i<t;i+=1)n.setPixel(i,o,e(i,o));var a=p();n.write(a);for(var u=function(){function e(t){a+=String.fromCharCode(r(63&t))}var n=0,o=0,i=0,a="",t={},r=function(t){if(t<0);else{if(t<26)return 65+t;if(t<52)return t-26+97;if(t<62)return t-52+48;if(62==t)return 43;if(63==t)return 47}throw"n:"+t};return t.writeByte=function(t){for(n=n<<8|255&t,o+=8,i+=1;6<=o;)e(n>>>o-6),o-=6},t.flush=function(){if(0<o&&(e(n<<6-o),o=n=0),i%3!=0)for(var t=3-i%3,r=0;r<t;r+=1)a+="="},t.toString=function(){return a},t}(),f=a.toByteArray(),c=0;c<f.length;c+=1)u.writeByte(f[c]);return u.flush(),"data:image/gif;base64,"+u};return i}();qrcode.stringToBytesFuncs["UTF-8"]=function(t){return function(t){for(var r=[],e=0;e<t.length;e++){var n=t.charCodeAt(e);n<128?r.push(n):n<2048?r.push(192|n>>6,128|63&n):n<55296||57344<=n?r.push(224|n>>12,128|n>>6&63,128|63&n):(e++,n=65536+((1023&n)<<10|1023&t.charCodeAt(e)),r.push(240|n>>18,128|n>>12&63,128|n>>6&63,128|63&n))}return r}(t)},function(t){"function"==typeof define&&define.amd?define([],t):"object"==typeof exports&&(module.exports=t())}(function(){return qrcode});
+</script>
+<script>
+const KEY = "jordan-tv-set";
+const HEADERS = {
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+  "accept-language": "en-US,en;q=0.9"
+};
+const PHYSICS = [
+  ["ZM8ECpBuQYE", "Motion in a Straight Line: Crash Course Physics #1", 640],
+  ["ObHJJYvu3RE", "Derivatives: Crash Course Physics #2", 602],
+  ["jLJLXka2wEM", "Integrals: Crash Course Physics #3", 609],
+  ["w3BhzYI6zXU", "Vectors and 2D Motion: Crash Course Physics #4", 606],
+  ["kKKM8Y-u7ds", "Newton's Laws: Crash Course Physics #5", 664],
+  ["fo_pmp5rtzo", "Friction: Crash Course Physics #6", 659]
+];
+const TED = [
+  ["8RPK5KwYhgA", "What if you didn’t brush your teeth for a year?", 330],
+  ["nXvKDYRvTno", "Scary stories to watch in the dark", 2060],
+  ["NPJ9KZqrl50", "Why does this animal never age?", 351],
+  ["1uTRlM6MbMo", "How to present your ideas effectively", 394]
+];
+
+let state = load();
+state.shuffleAt = Date.now();
+function watching() {
+  if (away) return true;
+  const video = document.getElementById("player");
+  return !!(video && !video.paused && !video.ended && video.readyState > 2);
+}
+let now = Date.now();
+let panel = null;
+let note = "";
+let hits = [];
+let busy = false;
+let zone = "rows";
+let barPick = 0;
+let onAir = false;
+let airTimer = 0;
+let barIndex = 0;
+let playerId = localStorage.getItem("jordan-player") || "youtube";
+let players = [{ id: "youtube", label: "YouTube" }, { id: "guide", label: "Jordan TV window" }];
+let filePlayers = [{ id: "guide", label: "Jordan TV" }];
+let filePlayerId = "guide";
+let phoneUrl = "";
+let cloudLists = [];
+let cloudIndex = 0;
+let traktTimer = 0;
+let pendingList = "";
+let formIndex = 0;
+let pickIndex = 0;
+let modePick = 0;
+let menuIndex = 0;
+let confirmYes = false;
+let channelIndex = 0;
+let full = false;
+let lastOk = 0;
+let focusSlot = 0;
+let addOnto = false;
+let skipped = 0;
+let playing = null;
+const streams = {};
+const warming = {};
+const MENU = ["air", "player", "archive", "add", "find", "export", "import"];
+const CHANNEL = ["more", "skip", "shuffle", "begin", "logolink", "logofile", "rename", "remove"];
+const PROGRAM = ["rename", "drop", "set", "channel"];
+let programIndex = 0;
+let programTarget = null;
+setInterval(() => {
+  now = Date.now();
+  if (state.shuffleAt && now - state.shuffleAt >= 3600000 && !watching()) {
+    state.shuffleAt = now;
+    if (state.resume && state.resume.videoId) tuned = { stationId: state.resume.stationId, videoId: state.resume.videoId, offset: Number(state.resume.offset) || 0, hold: true };
+    else tuned = null;
+    save();
+    if (!panel) draw();
+  }
+  const tick = document.getElementById("tick");
+  if (!tick || panel) return;
+  tick.textContent = clockNow(now);
+  const time = document.getElementById("time");
+  if (time) time.textContent = clock(now);
+}, 1000);
+
+function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (saved && Array.isArray(saved.stations) && saved.stations.length) {
+      ensureSets(saved.stations);
+      return saved;
+    }
+  } catch (e) {}
+  return {
+    activeId: "station-ted",
+    stations: [
+      station("station-physics", 4, "Physics", PHYSICS),
+      station("station-ted", 11, "TED-Ed", TED)
+    ]
+  };
+}
+function station(id, number, name, rows) {
+  return { id, number, name, skipShort: false, logo: "", videos: rows.map((row) => ({ id: row[0], title: row[1], durationSec: row[2] })) };
+}
+function rememberSpot() {
+  const station = active();
+  if (!station) return;
+  const video = document.getElementById("player");
+  const fromTune = tuned && tuned.stationId === station.id ? tuned : null;
+  const videoId = (fromTune && fromTune.videoId) || (video && video.dataset.id) || "";
+  if (!videoId) return;
+  const offset = Math.floor((video && video.dataset.id === videoId && video.currentTime) || (fromTune && fromTune.offset) || 0);
+  state.resume = { stationId: station.id, videoId, offset };
+}
+function save() {
+  rememberSpot();
+  localStorage.setItem(KEY, JSON.stringify(state));
+  if (window.JordanTube && window.JordanTube.remember) {
+    try { window.JordanTube.remember(JSON.stringify(ordered().map((item) => ({ id: item.id, name: item.name, number: item.number })))); } catch (e) { /* The phone list refreshes next time. */ }
+  }
+}
+function active() { return state.stations.find((item) => item.id === state.activeId) || state.stations[0] || null; }
+function playable(item) { return item.videos.filter((video) => !item.skipShort || video.durationSec >= 900); }
+function orderedVideos(item) {
+  const videos = playable(item);
+  if (item.mode !== "shuffle" || videos.length < 2) return videos;
+  const copy = videos.slice();
+  let seed = 2166136261;
+  const key = String(item.id || "") + ":" + String(state.shuffleAt || 0);
+  for (let i = 0; i < key.length; i++) seed = Math.imul(seed ^ key.charCodeAt(i), 16777619);
+  for (let i = copy.length - 1; i > 0; i--) {
+    seed = Math.imul(seed ^ (seed >>> 16), 2246822519);
+    const swap = copy[i];
+    const j = (seed >>> 0) % (i + 1);
+    copy[i] = copy[j];
+    copy[j] = swap;
+  }
+  return copy;
+}
+function airing(item, at) {
+  const videos = orderedVideos(item);
+  if (!videos.length) return null;
+  const total = videos.reduce((sum, video) => sum + Math.max(1, video.durationSec), 0);
+  let cursor = Math.floor(at / 1000) % total;
+  for (let i = 0; i < videos.length; i++) {
+    const length = Math.max(1, videos[i].durationSec);
+    if (cursor < length) return { video: videos[i], offset: item.fromStart ? 0 : cursor, rest: videos.slice(i + 1).concat(videos.slice(0, i)) };
+    cursor -= length;
+  }
+  return { video: videos[0], offset: 0, rest: videos.slice(1) };
+}
+function programAt(station, index) {
+  const row = blocks(station);
+  const item = row[index];
+  if (!item) return null;
+  if (!index) return airing(station, now);
+  return { video: item.video, offset: 0, rest: [] };
+}
+function blocks(station) {
+  const videos = orderedVideos(station);
+  const on = airing(station, now);
+  if (!videos.length || !on) return [];
+  let index = Math.max(0, videos.findIndex((video) => video.id === on.video.id));
+  let cursor = now - Math.max(0, on.offset || 0) * 1000;
+  if (tuned && tuned.hold && tuned.stationId === station.id) {
+    const heldIndex = videos.findIndex((video) => video.id === tuned.videoId);
+    if (heldIndex >= 0) {
+      index = heldIndex;
+      cursor = now;
+    }
+  }
+  const row = [];
+  while (row.length < 100) {
+    const video = videos[index % videos.length];
+    const dur = Math.max(60, Number(video.durationSec) || 60) * 1000;
+    const end = cursor + dur;
+    if (end > now) row.push({ video, start: Math.max(cursor, now), end });
+    cursor = end;
+    index += 1;
+  }
+  return row;
+}
+let tuned = null;
+if (state.resume && state.resume.videoId && state.stations.some((item) => item.id === state.resume.stationId)) {
+  state.activeId = state.resume.stationId;
+  tuned = { stationId: state.resume.stationId, videoId: state.resume.videoId, offset: Number(state.resume.offset) || 0, hold: true };
+}
+function previewShow(station) {
+  if (!station) return null;
+  const live = airing(station, now);
+  if (!live) return null;
+  if (tuned && tuned.stationId === station.id && tuned.hold) {
+    const video = orderedVideos(station).find((item) => item.id === tuned.videoId);
+    if (video) return { video, offset: tuned.offset || 0, rest: [] };
+  }
+  if (!tuned || tuned.stationId !== station.id || tuned.videoId !== live.video.id) {
+    tuned = { stationId: station.id, videoId: live.video.id, offset: live.offset || 0, hold: false };
+  }
+  return { video: live.video, offset: tuned.offset, rest: live.rest };
+}
+function previewAction(show, video, nativeOn, saved) {
+  const torbox = show.video.kind === "torbox";
+  const archive = show.video.kind === "archive";
+  if ((torbox || archive) && nativeOn && video.dataset.file === show.video.id) return "keep";
+  if (!torbox && !archive && video.dataset.id === show.video.id && video.getAttribute("src")) return "replay";
+  if (torbox && saved[show.video.id]) return "file";
+  if (archive && show.video.file) return "file";
+  if (!torbox && !archive && saved[show.video.id]) return "url";
+  if (torbox) return "resolve";
+  return "load";
+}
+function currentShow(station) {
+  if (!station) return null;
+  if (focusSlot > 0) return programAt(station, focusSlot);
+  return previewShow(station);
+}
+let nativeOn = false;
+function hideNative() {
+  nativeOn = false;
+  if (window.JordanTube && window.JordanTube.hidePlayer) window.JordanTube.hidePlayer();
+}
+function startFocused() {
+  const station = active();
+  const show = station ? programAt(station, focusSlot) : null;
+  if (!station || !show) return;
+  playing = { stationId: station.id, videoId: show.video.id, offset: focusSlot ? 0 : show.offset || 0 };
+}
+function beginPlaylist() {
+  const station = active();
+  const show = station ? programAt(station, focusSlot) : null;
+  if (!station || !show) return;
+  playing = { stationId: station.id, videoId: show.video.id, offset: 0 };
+}
+let away = false;
+let held = null;
+function parkPreview() {
+  away = true;
+  const video = document.getElementById("player");
+  if (video && tuned && video.dataset.id === tuned.videoId) tuned.offset = Math.floor(video.currentTime || tuned.offset || 0);
+  if (video) {
+    if (!held || !held.id) held = { id: video.dataset.id || "", time: video.currentTime || 0 };
+    else if (!video.dataset.id || video.dataset.id === held.id) held.time = video.currentTime || held.time || 0;
+    video.muted = true;
+    try { video.pause(); } catch (e) { /* Some players have already stopped. */ }
+  }
+  save();
+}
+function comeBack() {
+  if (!away) return;
+  away = false;
+  const video = document.getElementById("player");
+  if (held && held.id && tuned && tuned.videoId === held.id) tuned.offset = Math.floor(held.time || 0);
+  if (!video) { draw(); return; }
+  video.muted = false;
+  if (held && Number.isFinite(held.time)) {
+    try { video.currentTime = held.time; } catch (e) { /* The file may not be ready yet. */ }
+  }
+  const go = video.play();
+  if (go && go.catch) go.catch(() => {});
+}
+function handOff() {
+  const station = active();
+  if (!station) return;
+  const preview = previewShow(station);
+  const video = document.getElementById("player");
+  const previewTime = Math.floor((video && video.dataset.id && video.currentTime) || (preview && preview.offset) || 0);
+  const picked = focusSlot > 0 ? programAt(station, focusSlot) : preview;
+  if (!picked) return;
+  tuned = { stationId: station.id, videoId: picked.video.id, offset: focusSlot > 0 ? 0 : previewTime, hold: true };
+  held = { id: picked.video.id, time: focusSlot > 0 ? 0 : previewTime };
+  parkPreview();
+  const nativeAt = window.JordanTube && window.JordanTube.played ? Number(window.JordanTube.played()) || 0 : 0;
+  const same = preview && preview.video && preview.video.id === picked.video.id;
+  let at = focusSlot > 0 ? 0 : (same ? Math.max(preview.offset || 0, previewTime) : 0);
+  if (picked.video.kind === "archive" || picked.video.kind === "torbox") at = focusSlot > 0 ? 0 : Math.max(at, nativeAt);
+  if (picked.video.kind !== "archive" && picked.video.kind !== "torbox") at = 0;
+  if (picked.video.kind === "archive" && picked.video.file) {
+    const external = window.JordanTube && window.JordanTube.archivePlayer ? window.JordanTube.archivePlayer() : filePlayerId;
+    if (external && external !== "guide" && window.JordanTube.openFile) {
+      parkPreview();
+      away = true;
+      if (window.JordanTube.hidePlayer) window.JordanTube.hidePlayer();
+      window.JordanTube.openFile(picked.video.file, at);
+      return;
+    }
+    parkPreview();
+    openFull = true;
+    window.onStream(picked.video.id, picked.video.file, at);
+    return;
+  }
+  if (picked.video.kind === "torbox") {
+    parkPreview();
+    openFull = true;
+    const ready = streams[picked.video.id];
+    if (ready) window.onStream(picked.video.id, ready, at);
+    else if (window.JordanTube && window.JordanTube.resolve) window.JordanTube.resolve(picked.video.id, (picked.video.query || picked.video.title || "") + "|" + (picked.video.imdb || ""), picked.video.year || 0, picked.video.season || 0, picked.video.episode || 0, at);
+    return;
+  }
+  openFull = false;
+  if (window.JordanTube && window.JordanTube.watch) window.JordanTube.watch(picked.video.id, at);
+}
+window.parkPreview = parkPreview;
+window.comeBack = comeBack;
+function nextOnPlaylist() {
+  if (away) return;
+  const station = (tuned && state.stations.find((item) => item.id === tuned.stationId)) || active();
+  if (!station) return;
+  const list = orderedVideos(station);
+  if (!list.length || skipped > list.length) return;
+  const video = document.getElementById("player");
+  const currentId = (tuned && tuned.videoId) || (video && video.dataset.id) || "";
+  const index = list.findIndex((item) => item.id === currentId);
+  const next = list[index < 0 ? 0 : (index + 1) % list.length];
+  if (!next) return;
+  skipped += 1;
+  focusSlot = 0;
+  tuned = { stationId: station.id, videoId: next.id, offset: 0, hold: true };
+  save();
+  draw();
+}
+function showCover(on, videoId) {
+  const cover = document.getElementById("stage-cover");
+  if (!cover) return;
+  if (videoId) cover.style.backgroundImage = `url(https://i.ytimg.com/vi/${videoId}/hqdefault.jpg)`;
+  cover.style.display = on ? "block" : "none";
+}
+function playUrl(video, url, start) {
+  if (away) return;
+  showCover(false);
+  video.classList.add("live");
+  video.muted = true;
+  video.preload = "auto";
+  const begin = () => {
+    const go = video.play();
+    if (go && go.catch) go.catch(() => {});
+  };
+  if (video.getAttribute("src") !== url) {
+    video.classList.remove("live");
+    video.src = url;
+  }
+  begin();
+}
+function placeStage() {
+  const stage = document.getElementById("stage");
+  const hole = document.getElementById("frame");
+  if (!stage) return;
+  if (onAir) {
+    stage.style.display = "block";
+    stage.style.left = "0px";
+    stage.style.top = "0px";
+    stage.style.width = window.innerWidth + "px";
+    stage.style.height = window.innerHeight + "px";
+    return;
+  }
+  if (panel || !hole) { stage.style.display = "none"; return; }
+  const box = hole.getBoundingClientRect();
+  if (box.width < 40 || box.height < 40) return;
+  stage.style.display = "block";
+  stage.style.left = (box.left + 3) + "px";
+  stage.style.top = (box.top + 3) + "px";
+  stage.style.width = Math.max(0, box.width - 6) + "px";
+  stage.style.height = Math.max(0, box.height - 6) + "px";
+  if (nativeOn && !away && !openFull && window.JordanTube && window.JordanTube.movePlayer) {
+    const scale = window.devicePixelRatio || 1;
+    window.JordanTube.movePlayer(Math.round(box.left * scale), Math.round(box.top * scale), Math.round(box.width * scale), Math.round(box.height * scale));
+  }
+}
+function mountPlayer(show) {
+  const stage = document.getElementById("stage");
+  const hole = document.getElementById("frame");
+  document.body.classList.remove("is-full");
+  document.body.classList.toggle("is-air", onAir);
+  if (!stage || !hole || panel || away) {
+    const quiet = document.getElementById("player");
+    if (quiet) { quiet.muted = true; try { quiet.pause(); } catch (e) { /* Already quiet. */ } }
+    if (panel && stage) stage.style.display = "none";
+    hideNative();
+    return;
+  }
+  placeStage();
+  requestAnimationFrame(placeStage);
+  if (!show) {
+    stage.style.display = "none";
+    hideNative();
+    return;
+  }
+  stage.style.display = "block";
+  stage.onclick = () => handOff();
+  if (show.video && !show.video.kind && !streams[show.video.id] && window.JordanTube && window.JordanTube.cached) {
+    const ready = window.JordanTube.cached(show.video.id) || "";
+    if (ready) streams[show.video.id] = ready;
+  }
+  const torbox = show.video.kind === "torbox";
+  const archive = show.video.kind === "archive";
+  if (!torbox && !archive) hideNative();
+  let video = document.getElementById("player");
+  if (!video || video.tagName !== "VIDEO") {
+    stage.innerHTML = `<video id="player" autoplay muted playsinline disableremoteplayback tabindex="-1"></video><div id="stage-cover"></div>`;
+    video = document.getElementById("player");
+    video.controls = false;
+    video.addEventListener("loadeddata", () => { video.classList.add("live"); showCover(false); });
+    video.addEventListener("playing", () => { skipped = 0; video.classList.add("live"); video.muted = false; showCover(false); });
+    video.addEventListener("ended", () => { if (video.classList.contains("live")) nextOnPlaylist(); });
+  }
+  if (onAir && archive && show.video.file && window.JordanTube && window.JordanTube.playAmbient) {
+    nativeOn = true;
+    window.JordanTube.playAmbient(show.video.id, show.video.file);
+    return;
+  }
+  if (onAir && !archive && !torbox) {
+    hideNative();
+    if (video && video.dataset.id === show.video.id && video.getAttribute("src")) {
+      video.muted = false;
+      const go = video.play();
+      if (go && go.catch) go.catch(() => {});
+      return;
+    }
+  }
+  const start = 0;
+  const action = previewAction(show, video, nativeOn, streams);
+  if (action === "keep") return;
+  if (action === "replay" || action === "url") {
+    video.dataset.id = show.video.id;
+    video.dataset.start = String(start);
+    playUrl(video, action === "url" ? streams[show.video.id] : video.getAttribute("src"), start);
+    return;
+  }
+  video.dataset.id = show.video.id;
+  video.dataset.file = "";
+  video.dataset.start = String(start);
+  showCover(false);
+  if (action === "file") window.onStream(show.video.id, show.video.kind === "archive" ? show.video.file : streams[show.video.id], start);
+  else if (action === "resolve" && window.JordanTube && window.JordanTube.resolve) window.JordanTube.resolve(show.video.id, (show.video.query || show.video.title || "") + "|" + (show.video.imdb || ""), show.video.year || 0, show.video.season || 0, show.video.episode || 0, start);
+  else if (window.JordanTube && window.JordanTube.loadStream) window.JordanTube.loadStream(show.video.id, start);
+}
+let waitingFor = "";
+let openFull = false;
+function retrySame(id, start) {
+  showCover(true, id);
+  if (waitingFor === id) return;
+  waitingFor = id;
+  let tries = 0;
+  const again = () => {
+    if (waitingFor !== id) return;
+    const video = document.getElementById("player");
+    if (!video || video.dataset.id !== id || video.classList.contains("live")) return;
+    if (video.getAttribute("src")) return;
+    tries += 1;
+    if (tries > 8) return;
+    const station = state.stations.find((item) => item.videos.some((video) => video.id === id));
+    const row = station && station.videos.find((video) => video.id === id);
+    if (row && row.kind === "archive" && row.file) window.onStream(id, row.file, start);
+    else if (row && row.kind === "torbox" && window.JordanTube && window.JordanTube.resolve) window.JordanTube.resolve(id, (row.query || row.title || "") + "|" + (row.imdb || ""), row.year || 0, row.season || 0, row.episode || 0, start);
+    else if (window.JordanTube && window.JordanTube.loadStream) window.JordanTube.loadStream(id, start);
+    setTimeout(again, 5000);
+  };
+  setTimeout(again, 5000);
+}
+window.onStream = (id, url, start) => {
+  const video = document.getElementById("player");
+  const want = currentShow(active());
+  if (url && url !== "native") streams[id] = url;
+  delete warming[id];
+  if (url !== "native" && !openFull && want && want.video.id !== id) return;
+  if (!url) {
+    retrySame(id, Number(start) || 0);
+    return;
+  }
+  waitingFor = "";
+  if (url === "native") { skipped = 0; showCover(false); return; }
+  if (url.indexOf("googlevideo.com") < 0 && openFull && window.JordanTube && window.JordanTube.playFull) {
+    openFull = false;
+    if (video) { video.dataset.file = ""; video.muted = true; try { video.pause(); } catch (e) { /* Full screen has the sound. */ } }
+    window.JordanTube.playFull(id, url, Number(start) || 0);
+    return;
+  }
+  if (url.indexOf("googlevideo.com") < 0 && window.JordanTube && window.JordanTube.playFile) {
+    const hole = document.getElementById("frame");
+    const box = hole ? hole.getBoundingClientRect() : { left: 0, top: 0, width: 640, height: 360 };
+    const scale = window.devicePixelRatio || 1;
+    if (video) { video.dataset.file = id; video.muted = true; try { video.pause(); } catch (e) { /* The file player has the sound. */ } }
+    nativeOn = true;
+    window.JordanTube.playFile(id, url, Number(start) || 0, Math.round(box.left * scale), Math.round(box.top * scale), Math.round(box.width * scale), Math.round(box.height * scale));
+    return;
+  }
+  if (!video || video.dataset.id !== id) return;
+  playUrl(video, url, Number(start) || 0);
+};
+function clock(ms) {
+  const date = new Date(ms);
+  if (!Number.isFinite(ms) || Number.isNaN(date.getTime())) return "";
+  let hour = date.getHours();
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const mark = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return hour + ":" + minute + " " + mark;
+}
+function clockNow(ms) { return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" }); }
+function esc(value) {
+  const amp = String.fromCharCode(38);
+  return String(value ?? "").replace(/[&<>"']/g, (ch) => {
+    if (ch === "&") return amp + "amp;";
+    if (ch === "<") return amp + "lt;";
+    if (ch === ">") return amp + "gt;";
+    if (ch === '"') return amp + "quot;";
+    return amp + "#39;";
+  });
+}
+
+function barPx(show, unit) {
+  const minutes = Math.max(30, (show.end - show.start) / 60000);
+  const byTime = (minutes / 30) * unit;
+  const title = ((show.video && show.video.title) || "Show");
+  const byTitle = Math.ceil(title.length / 2) * 13 + 36;
+  return Math.round(Math.max(byTime, byTitle, 150));
+}
+function warm(id) {
+  if (!id || String(id).length !== 11 || streams[id] || warming[id]) return;
+  if (!window.JordanTube || !window.JordanTube.loadStream) return;
+  warming[id] = true;
+  window.JordanTube.loadStream(id, 0);
+}
+function pinBlock() {
+  const guide = document.querySelector(".guide");
+  const picked = document.querySelector(".slot.pick");
+  const channel = document.querySelector(".row.on .ch-id");
+  if (!guide || !picked) return;
+  const edge = channel ? channel.getBoundingClientRect().right : guide.getBoundingClientRect().left;
+  guide.scrollLeft += picked.getBoundingClientRect().left - edge;
+}
+function ensureSets(stations) {
+  (stations || []).forEach((station) => {
+    const fallback = "set-" + station.id;
+    (station.videos || []).forEach((video) => {
+      if (video.set === fallback) video.set = "";
+    });
+  });
+}
+function tagSet(videos, name) {
+  const set = "set-" + Date.now().toString(36);
+  videos.forEach((video) => {
+    video.set = set;
+    video.setName = name || "Set";
+  });
+}
+function warmAround() {
+  if (away) return;
+  const list = ordered();
+  const index = Math.max(0, list.findIndex((item) => item.id === (active() && active().id)));
+  for (let step = -2; step <= 2; step += 1) {
+    const station = list[index + step];
+    if (!station) continue;
+    const row = step === 0 ? currentShow(station) : (blocks(station)[0] || null);
+    if (row && row.video && !row.video.kind) warm(row.video.id);
+    if (step === 0) {
+      const next = blocks(station)[Math.min(focusSlot, 98) + 1];
+      if (next && next.video && !next.video.kind) warm(next.video.id);
+    }
+  }
+}
+function draw() {
+  const item = active();
+  const show = item ? currentShow(item) : null;
+  const lineup = item ? blocks(item) : [];
+  const slot = lineup[Math.min(focusSlot, Math.max(0, lineup.length - 1))] || null;
+  const next = lineup.length > 1 ? lineup[(Math.min(focusSlot, lineup.length - 1) + 1) % lineup.length] : null;
+  const nextTitle = next && next.video ? next.video.title : "";
+  const when = slot ? clock(slot.start) + " – " + clock(slot.end) : "";
+  const title = slot && slot.video ? slot.video.title : "Add a channel";
+  const unit = 220;
+  let headerSlots = 12;
+  for (const station of state.stations) {
+    let across = 0;
+    for (const item of blocks(station)) across += barPx(item, unit);
+    headerSlots = Math.min(400, Math.max(headerSlots, Math.ceil(across / unit)));
+  }
+  const heads = [];
+  for (let step = 1; step <= headerSlots; step += 1) heads.push(clock(now + step * 30 * 60000));
+  const rows = state.stations.slice().sort((a, b) => a.number - b.number).map((station) => {
+    const shows = blocks(station);
+    const selected = item && station.id === item.id;
+    const slots = shows.length ? shows.map((show, index) => `<span class="cell title block slot${selected && focusSlot === index ? " pick" : ""}" style="width:${barPx(show, unit)}px" data-slot="${index}" data-id="${station.id}"><span class="name">${esc(show.video.title)}</span></span>`).join("") : `<span class="cell title" style="width:${unit}px"><span class="name">No shows. Hold OK to add or remove.</span></span>`;
+    return `<button class="row ${selected ? "on" : ""}" data-id="${station.id}">
+      <span class="cell ch-id"><b>${station.number}</b>${station.logo ? `<img class="ch-logo" src="${station.logo}" alt="" />` : `<small>${esc(station.name)}</small>`}</span>
+      <span class="lane">${slots}</span>
+    </button>`;
+  }).join("");
+  const root = document.getElementById("app");
+  root.innerHTML = `<div id="app-inner">
+    <div class="top">
+      <div class="frame" id="frame"></div>
+      <aside class="info">
+        <div class="info-top">
+          <b class="chline">CH ${item ? item.number : ""} ${esc(item ? item.name : "Jordan")}</b>
+          <b class="clock" id="time">${esc(clock(now))}</b>
+        </div>
+        <b class="showname">${esc(title)}</b>
+        <span class="when">${esc(when)}</span>
+        <span class="next">${nextTitle ? "NEXT: " + esc(nextTitle) : ""}</span>
+        <div class="info-foot">
+          <span class="hint">Press OK to watch.</span>
+          <img class="mark" src="jordan-logo.png" alt="Jordan TV" />
+        </div>
+      </aside>
+    </div>
+    <div class="guide">
+      <div class="times"><span id="tick" class="cell ch-id">${esc(clockNow(now))}</span><span class="lane">${heads.map((label) => `<span class="block" style="width:${unit}px">${esc(label)}</span>`).join("")}</span></div>
+      ${rows || ""}
+    </div>
+    <div class="bar ${zone === "bar" ? "on" : ""}">
+      <button id="settings" class="${zone === "bar" && barPick === 0 ? "pick" : ""}">Settings</button>
+      ${state.onAir ? `<button id="onair" class="${zone === "bar" && barPick === 1 ? "pick" : ""}">On air</button>` : ""}
+    </div>
+  </div>${sheet()}`;
+  mountPlayer(show);
+  airMark();
+  requestAnimationFrame(() => {
+    pinBlock();
+    document.querySelectorAll(".roll").forEach((node) => {
+      const text = node.firstElementChild;
+      if (!text) return;
+      const extra = text.scrollWidth - node.clientWidth;
+      if (extra > 8) {
+        text.style.setProperty("--shift", extra + "px");
+        node.classList.add("on");
+      }
+    });
+  });
+  root.querySelectorAll(".slot").forEach((cell) => {
+    cell.onclick = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      state.activeId = cell.dataset.id;
+      zone = "rows";
+      focusSlot = Number(cell.dataset.slot) || 0;
+      tuned = null;
+      save();
+      draw();
+    };
+  });
+  document.getElementById("settings").onclick = () => openMenu();
+  const guide = document.querySelector(".guide");
+  const row = document.querySelector(".row.on");
+  if (guide && row) {
+    const guideBox = guide.getBoundingClientRect();
+    const rowBox = row.getBoundingClientRect();
+    if (rowBox.top < guideBox.top) guide.scrollTop -= guideBox.top - rowBox.top;
+    else if (rowBox.bottom > guideBox.bottom) guide.scrollTop += rowBox.bottom - guideBox.bottom;
+    const picked = root.querySelector(".slot.pick");
+    if (picked) pinBlock();
+  }
+  warmAround();
+  const sheetPick = document.querySelector(".sheet .hit.pick, .sheet button.pick");
+  if (sheetPick && sheetPick.parentElement) {
+    const box = sheetPick.parentElement.getBoundingClientRect();
+    const pick = sheetPick.getBoundingClientRect();
+    if (pick.top < box.top) sheetPick.parentElement.scrollTop -= box.top - pick.top;
+    else if (pick.bottom > box.bottom) sheetPick.parentElement.scrollTop += pick.bottom - box.bottom;
+  }
+  root.querySelectorAll("[data-menu]").forEach((button) => { button.onclick = () => runMenu(button.dataset.menu); });
+  root.querySelectorAll("[data-confirm]").forEach((button) => { button.onclick = () => { confirmYes = button.dataset.confirm === "yes"; if (confirmYes) removeCurrent(); else backOne(); }; });
+  const file = document.getElementById("logo-file");
+  if (file) file.onchange = (event) => {
+    const picked = event.target.files && event.target.files[0];
+    event.target.value = "";
+    if (!picked || !item) return;
+    const reader = new FileReader();
+    reader.onload = () => { item.logo = String(reader.result || ""); save(); draw(); };
+    reader.readAsDataURL(picked);
+  };
+  root.querySelectorAll("[data-ask]").forEach((button) => { button.onclick = () => ask(button.dataset.ask, button.dataset.title, button.dataset.value); });
+  root.querySelectorAll("[data-cloud]").forEach((button) => { button.onclick = () => runCloud(button.dataset.cloud); });
+  root.querySelectorAll("[data-program]").forEach((button) => { button.onclick = () => runProgram(button.dataset.program); });
+  root.querySelectorAll("[data-channel]").forEach((button) => { button.onclick = () => runChannel(button.dataset.channel); });
+  root.querySelectorAll("[data-close]").forEach((button) => { button.onclick = () => backOne(); });
+  root.querySelectorAll("[data-leave]").forEach((button) => { button.onclick = () => closePanel(); });
+  root.querySelectorAll("[data-mode]").forEach((button) => { button.onclick = () => chooseMode(Number(button.dataset.mode)); });
+  root.querySelectorAll("[data-player]").forEach((button) => { button.onclick = () => choosePlayer(button.dataset.player); });
+  root.querySelectorAll("[data-fileplayer]").forEach((button) => { button.onclick = () => chooseFilePlayer(button.dataset.fileplayer); });
+  const chosen = document.querySelector(".hit.pick");
+  if (chosen && chosen.scrollIntoView) chosen.scrollIntoView({ block: "nearest" });
+  if (!panel && zone === "bar") {
+    const settings = document.getElementById("settings");
+    if (settings && settings.scrollIntoView) settings.scrollIntoView({ block: "nearest" });
+  }
+  root.querySelectorAll(".hit[data-url]").forEach((button) => { button.onclick = () => void addLink(button.dataset.url); });
+}
+
+function sheet() {
+  const file = `<input id="logo-file" type="file" accept="image/*" hidden />`;
+  if (panel === "add") {
+    const onto = addOnto ? active() : null;
+    const heading = onto ? `Add to ${onto.name}` : "Add a station";
+    const help = onto ? "Add a YouTube link, or an Archive page. Every video on that page is added." : "Paste a YouTube link, or an Archive download page. Every video on that page becomes the channel.";
+    return `${file}<div class="shade"><div class="sheet"><h2>${esc(heading)}</h2><p>${esc(help)}</p><button type="button" class="hit${formIndex === 0 ? " pick" : ""}" data-ask="archive" data-title="Archive download page">Internet Archive</button><button type="button" class="hit${formIndex === 1 ? " pick" : ""}" data-ask="link" data-title="YouTube link">YouTube link</button><p class="err">${esc(note)}</p><div class="actions"><button type="button" data-close class="${formIndex === 2 ? "pick" : ""}">Cancel</button></div></div></div>`;
+  }
+  if (panel === "playmode") {
+    const labels = ["Play in order", "Shuffle"];
+    const choices = labels.map((label, index) => `<button type="button" class="hit ${index === modePick ? "pick" : ""}" data-mode="${index}">${label}</button>`).join("");
+    return `${file}<div class="shade"><div class="sheet"><h2>How should this channel play?</h2><p>Shuffle mixes your videos. In order plays them as you added them. Either way, you join it like cable.</p>${choices}<div class="actions"><button type="button" data-leave>Close</button></div></div></div>`;
+  }
+  if (panel === "find") {
+    return `${file}<div class="shade"><div class="sheet"><h2>Find</h2><button type="button" class="hit${formIndex === 0 ? " pick" : ""}" data-ask="find" data-title="Search YouTube">Type a search</button><div>${hits.map((hit, index) => `<button type="button" class="hit${formIndex === index + 1 ? " pick" : ""}" data-url="${esc(hit.url)}">${esc(hit.title)}</button>`).join("")}</div><p class="err">${esc(note)}</p><div class="actions"><button type="button" data-close class="${formIndex === hits.length + 1 ? "pick" : ""}">Close</button></div></div></div>`;
+  }
+  if (panel === "player") {
+    const choices = players.map((choice, index) => `<button type="button" class="hit ${index === pickIndex ? "pick" : ""}" data-player="${esc(choice.id)}">${esc(choice.label)}</button>`).join("");
+    return `${file}<div class="shade"><div class="sheet"><h2>Player</h2><p>YouTube is the default. Pick SmartTube or TizenTube here to change it.</p>${choices}<div class="actions"><button type="button" data-close>Back</button></div></div></div>`;
+  }
+  if (panel === "fileplay") {
+    const choices = filePlayers.map((choice, index) => `<button type="button" class="hit ${index === pickIndex ? "pick" : ""}" data-fileplayer="${esc(choice.id)}">${esc(choice.label)}</button>`).join("");
+    return `${file}<div class="shade"><div class="sheet"><h2>Archive player</h2><p>OK opens the original file in the player you pick. mpv or VLC gives you pause, seek, and full quality. Jordan TV plays it full screen here. Back returns to the guide.</p>${choices}<div class="actions"><button type="button" data-close>Back</button></div></div></div>`;
+  }
+  if (panel === "program") {
+    const found = programVideo();
+    const labels = { rename: "Rename this show", drop: "Delete this show", set: "Delete this set", channel: "Channel options" };
+    const choices = PROGRAM.map((id, index) => `<button type="button" class="hit ${index === programIndex ? "pick" : ""}" data-program="${id}">${esc(labels[id])}</button>`).join("");
+    const title = found ? found.video.title : "This show";
+    return `${file}<div class="shade"><div class="sheet"><h2>${esc(title)}</h2><p>Delete this set removes every video that was added with this one. The channel stays.</p>${choices}<div class="actions"><button type="button" data-leave>Close</button></div></div></div>`;
+  }
+  if (panel === "channel") {
+    const current = active();
+    const labels = {
+      more: "Add videos",
+      skip: `Skip shorts    ${current && current.skipShort ? "On" : "Off"}`,
+      shuffle: `Shuffle    ${current && current.mode === "shuffle" ? "On" : "Off"}`,
+      begin: `Start at beginning    ${current && current.fromStart ? "On" : "Off"}`,
+      logolink: "Logo from a link",
+      logofile: "Choose a picture",
+      rename: "Rename",
+      remove: "Delete channel"
+    };
+    const choices = CHANNEL.map((id, index) => `<button type="button" class="hit ${index === channelIndex ? "pick" : ""}" data-channel="${id}">${esc(labels[id])}</button>`).join("");
+    return `${file}<div class="shade"><div class="sheet"><h2>${esc(current ? current.number + "  " + current.name : "Channel")}</h2>${choices}<div class="actions"><button type="button" data-leave>Close</button></div></div></div>`;
+  }
+  if (panel === "rename") {
+    const current = active();
+    return `${file}<div class="shade"><div class="sheet"><h2>Rename</h2><button type="button" class="hit${formIndex === 0 ? " pick" : ""}" data-ask="rename" data-title="Channel name" data-value="${esc(current ? current.name : "")}">Type a new name</button><div class="actions"><button type="button" data-close class="${formIndex === 1 ? "pick" : ""}">Cancel</button></div></div></div>`;
+  }
+  if (panel === "menu") {
+    const labels = { air: `On air    ${state.onAir ? "On" : "Off"}`, player: `Player    ${playerLabel()}`, archive: `Archive player    ${filePlayerLabel()}`, add: "Add station", find: "Find", export: "Export setup", import: "Import setup" };
+    const choices = MENU.map((id, index) => `<button type="button" class="hit ${index === menuIndex ? "pick" : ""}" data-menu="${id}">${esc(labels[id])}</button>`).join("");
+    const link = phoneLink();
+    const picture = qrMarkup(link);
+    return `${file}<div class="shade"><div class="sheet"><h2>Settings</h2>${choices}${picture}<p>For a channel logo, hold OK on that channel, then choose a picture or paste an image link. Export setup keeps it.</p><p>${esc(link)}</p><p class="err">${esc(note)}</p><div class="actions"><button type="button" data-leave>Close</button></div></div></div>`;
+  }
+  if (panel === "cloud") {
+    const status = cloudState();
+    const actions = cloudActions(status);
+    const choices = actions.map((row, index) => `<button type="button" class="hit ${index === cloudIndex ? "pick" : ""}" data-cloud="${esc(row.id)}">${esc(row.label)}</button>`).join("");
+    const code = status.code ? `<p>On your phone open trakt.tv/activate and enter <b>${esc(status.code)}</b></p>` : "";
+    return `${file}<div class="shade"><div class="sheet"><h2>Torbox and Trakt</h2><p>Paste the Torbox key and the Trakt client id. Trakt does not give a secret. OK opens the TV keyboard.</p>${code}${choices}<p class="err">${esc(note)}</p><div class="actions"><button type="button" data-leave>Close</button></div></div></div>`;
+  }
+  if (panel === "confirm") {
+    return `${file}<div class="shade"><div class="sheet"><h2>Remove ${esc(active() ? active().name : "this channel")}?</h2><p>This only removes it from the guide.</p><div class="actions"><button type="button" class="${confirmYes ? "" : "pick"}" data-confirm="no">Keep it</button><button type="button" class="${confirmYes ? "pick" : ""}" data-confirm="yes">Remove</button></div></div></div>`;
+  }
+  return file;
+}
+
+async function net(url, method, headers, body) {
+  if (window.JordanTube && window.JordanTube.request) {
+    return window.JordanTube.request(url, method || "GET", JSON.stringify(headers || {}), body || "");
+  }
+  const response = await fetch(url, { method: method || "GET", headers, body: body || undefined });
+  return response.text();
+}
+function unquote(value) { try { return JSON.parse(`"${value}"`); } catch (e) { return value; } }
+function parseTarget(raw) {
+  const text = String(raw || "").trim();
+  if (/^[\w-]{11}$/.test(text)) return { kind: "video", id: text };
+  let url;
+  try { url = new URL(text.includes("://") ? text : `https://${text}`); } catch (e) { return null; }
+  const host = url.hostname.replace(/^www\./, "");
+  if (!/youtube\.com$|youtu\.be$/.test(host)) return null;
+  const list = url.searchParams.get("list");
+  if (url.pathname === "/playlist" && list) return { kind: "playlist", id: list };
+  if (host === "youtu.be") return { kind: "video", id: url.pathname.replace(/^\//, "").slice(0, 11) };
+  const watch = url.searchParams.get("v");
+  if (watch && watch.length === 11) return { kind: "video", id: watch };
+  const channel = url.pathname.match(/\/channel\/(UC[\w-]{22})/);
+  if (channel) return { kind: "channel", id: channel[1] };
+  const handle = url.pathname.match(/\/@([\w.-]+)/);
+  if (handle) return { kind: "handle", id: handle[1] };
+  return null;
+}
+function pageUrl(target) {
+  if (target.kind === "playlist") return `https://www.youtube.com/playlist?list=${target.id}`;
+  if (target.kind === "video") return `https://www.youtube.com/watch?v=${target.id}`;
+  if (target.kind === "channel") return `https://www.youtube.com/channel/${target.id}/videos`;
+  return `https://www.youtube.com/@${target.id}/videos`;
+}
+function pushVideo(videos, seen, id, title, durationSec) {
+  if (!id || seen.has(id) || durationSec < 1) return;
+  seen.add(id);
+  videos.push({ id, title: title || "Video", durationSec });
+}
+function clockSeconds(clock) {
+  const bits = clock ? clock.split(":").map(Number) : [];
+  if (bits.length === 3) return bits[0] * 3600 + bits[1] * 60 + bits[2];
+  if (bits.length === 2) return bits[0] * 60 + bits[1];
+  return 0;
+}
+function takePlaylist(text, videos, seen) {
+  text.split('"playlistVideoRenderer":{').slice(1).forEach((part) => {
+    const chunk = part.slice(0, 5000);
+    const id = (chunk.match(/"videoId":"([\w-]{11})"/) || [])[1];
+    const title = [...chunk.matchAll(/"text":"((?:\\.|[^"\\])*)"/g)].map((match) => unquote(match[1]).trim()).find((item) => item.length > 1 && !/^\d+:\d\d/.test(item));
+    const durationSec = clockSeconds((chunk.match(/"text":"(\d{1,2}:\d{2}(?::\d{2})?)"/) || [])[1]) || Number((chunk.match(/"lengthSeconds":"(\d+)"/) || [])[1] || 60);
+    pushVideo(videos, seen, id, title, durationSec);
+  });
+  text.split('"lockupViewModel":{').slice(1).forEach((part) => {
+    const chunk = part.slice(0, 9000);
+    const id = (chunk.match(/\/vi\/([\w-]{11})\//) || chunk.match(/"animationActivationTargetId":"([\w-]{11})"/) || [])[1];
+    const title = unquote((chunk.match(/"lockupMetadataViewModel":\{"title":\{"content":"((?:\\.|[^"\\])*)"/) || [])[1] || "");
+    const durationSec = clockSeconds((chunk.match(/"thumbnailBadgeViewModel":\{"text":"(\d{1,2}:\d{2}(?::\d{2})?)"/) || [])[1]) || 60;
+    pushVideo(videos, seen, id, title, durationSec);
+  });
+}
+function continuationToken(text) {
+  const match = text.match(/"continuationCommand":\{"token":"((?:\\.|[^"\\])*)"/);
+  return match ? unquote(match[1]) : "";
+}
+async function gather(target) {
+  if (target.kind === "video") {
+    const html = await net(pageUrl(target), "GET", HEADERS, "");
+    const title = unquote((html.match(/"videoDetails":\{"videoId":"[\w-]{11}","title":"((?:\\.|[^"\\])*)"/) || html.match(/property="og:title" content="([^"]+)"/) || [])[1] || "Video").replace(/\s+-\s+YouTube$/, "");
+    const durationSec = Number((html.match(/"lengthSeconds":"(\d+)"/) || [])[1] || 60);
+    return { name: title.slice(0, 32), videos: [{ id: target.id, title, durationSec }] };
+  }
+  let playlistId = target.kind === "playlist" ? target.id : "";
+  let name = "";
+  let page = "";
+  if (!playlistId) {
+    page = await net(pageUrl(target), "GET", HEADERS, "");
+    const channelId = (page.match(/"browseId":"(UC[\w-]{22})"/) || page.match(/"channelId":"(UC[\w-]{22})"/) || [])[1];
+    if (!channelId) throw new Error("Couldn't find that channel.");
+    playlistId = `UU${channelId.slice(2)}`;
+    name = ((page.match(/property="og:title" content="([^"]+)"/) || [])[1] || "Channel").replace(/\s+-\s+YouTube$/, "");
+  }
+  if (!page || (!page.includes("playlistVideoRenderer") && !page.includes("lockupViewModel"))) page = await net(`https://www.youtube.com/playlist?list=${playlistId}`, "GET", HEADERS, "");
+  if (!name) name = ((page.match(/property="og:title" content="([^"]+)"/) || [])[1] || "Playlist").replace(/\s+-\s+YouTube$/, "");
+  const videos = [];
+  const seen = new Set();
+  takePlaylist(page, videos, seen);
+  const key = (page.match(/"INNERTUBE_API_KEY":"([^"]+)"/) || [])[1];
+  const version = (page.match(/"INNERTUBE_CLIENT_VERSION":"([^"]+)"/) || [])[1] || "2.20240101.00.00";
+  const visitor = (page.match(/"visitorData":"([^"]+)"/) || [])[1] || "";
+  let token = continuationToken(page);
+  let pages = 0;
+  while (token && key && videos.length < 400 && pages < 12) {
+    pages += 1;
+    const body = JSON.stringify({ context: { client: { clientName: "WEB", clientVersion: version, hl: "en", gl: "US", visitorData: visitor } }, continuation: token });
+    const text = await net(`https://www.youtube.com/youtubei/v1/browse?key=${encodeURIComponent(key)}`, "POST", { ...HEADERS, "content-type": "application/json", origin: "https://www.youtube.com" }, body);
+    const before = videos.length;
+    takePlaylist(text, videos, seen);
+    const next = continuationToken(text);
+    if (!next || next === token || videos.length === before) break;
+    token = next;
+  }
+  if (!videos.length) throw new Error("No videos on that link.");
+  return { name: name.slice(0, 32), videos };
+}
+function archiveTitle(value) {
+  if (Array.isArray(value)) return String(value[0] || "Movie");
+  return String(value || "Movie");
+}
+function prettyName(name) {
+  const base = String(name || "Video").split("/").pop().replace(/\.[^.]+$/, "");
+  return base.replace(/[._]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+function archiveSeconds(file, info) {
+  const fromFile = Number(file && file.length);
+  if (fromFile > 30) return Math.round(fromFile);
+  return clockSeconds(archiveTitle(info && info.runtime)) || 1500;
+}
+function archiveRows(files) {
+  return (files || []).filter((file) => /\.(mp4|m4v|mkv|webm|ogv|avi|mpeg|mpg|mov)$/i.test(file.name || "") && !/thumb|sample|\.ia\.|_512kb/i.test(file.name || ""));
+}
+function archiveLink(identifier, name) {
+  return `https://archive.org/download/${identifier}/${encodeURI(name)}`;
+}
+function archiveVideos(identifier, meta, everyFile) {
+  const info = meta && meta.metadata ? meta.metadata : {};
+  const rows = archiveRows(meta && meta.files);
+  if (!rows.length) return [];
+  if (everyFile && rows.length > 1) {
+    return rows.sort((a, b) => String(a.name).localeCompare(String(b.name))).map((file) => ({
+      id: `ia-${identifier}-${file.name}`.slice(0, 180),
+      title: prettyName(file.name),
+      durationSec: archiveSeconds(file, info),
+      kind: "archive",
+      file: archiveLink(identifier, file.name)
+    }));
+  }
+  const picked = rows.slice().sort((a, b) => (Number(b.height) || 0) - (Number(a.height) || 0) || (Number(b.size) || 0) - (Number(a.size) || 0))[0];
+  return [{
+    id: `ia-${identifier}`,
+    title: archiveTitle(info.title || prettyName(picked.name)),
+    durationSec: archiveSeconds(picked, info),
+    kind: "archive",
+    file: archiveLink(identifier, picked.name)
+  }];
+}
+async function archiveMovies(raw) {
+  const text = String(raw || "").trim();
+  let search = text;
+  let name = text.slice(0, 32);
+  const details = text.match(/archive\.org\/(?:details|download)\/([^/?#]+)/i);
+  if (details) {
+    const identifier = decodeURIComponent(details[1]);
+    const meta = JSON.parse(await net(`https://archive.org/metadata/${encodeURIComponent(identifier)}`, "GET", {}, ""));
+    const info = meta && meta.metadata ? meta.metadata : {};
+    name = archiveTitle(info.title).slice(0, 32);
+    if (info.mediatype && info.mediatype !== "collection") {
+      const videos = archiveVideos(identifier, meta, true);
+      if (!videos.length) throw new Error("That page has no videos.");
+      return { name, videos };
+    }
+    search = `collection:${identifier}`;
+  }
+  const query = `${search} AND mediatype:movies`;
+  const found = JSON.parse(await net(`https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fl[]=identifier&fl[]=title&sort[]=downloads+desc&rows=24&page=1&output=json`, "GET", {}, ""));
+  const docs = (found.response && found.response.docs) || [];
+  const videos = [];
+  for (const doc of docs) {
+    if (!doc.identifier || videos.length >= 24) continue;
+    try {
+      const meta = JSON.parse(await net(`https://archive.org/metadata/${encodeURIComponent(doc.identifier)}`, "GET", {}, ""));
+      videos.push(...archiveVideos(doc.identifier, meta, false));
+    } catch (e) { /* Skip an item the Archive did not answer. */ }
+  }
+  if (!videos.length) throw new Error("No videos in that Archive search.");
+  if (!details) name = (text || "Archive").slice(0, 32);
+  return { name: name || "Archive", videos };
+}
+async function addArchive(raw, ontoId) {
+  busy = true;
+  note = "Looking through the Archive.";
+  draw();
+  try {
+    const found = await archiveMovies(raw);
+    const onto = ontoId ? state.stations.find((item) => item.id === ontoId) : null;
+    if (onto) {
+      const have = new Set(onto.videos.map((video) => video.id));
+      const extra = found.videos.filter((video) => !have.has(video.id));
+      if (!extra.length) throw new Error("Those are already on this channel.");
+      tagSet(extra, found.name);
+      onto.videos = onto.videos.concat(extra);
+      state.activeId = onto.id;
+      note = `Added ${extra.length} to ${onto.name}.`;
+      panel = "channel";
+    } else {
+      const id = `s-${Date.now().toString(36)}`;
+      const number = state.stations.reduce((max, item) => Math.max(max, item.number), 1) + 1;
+      tagSet(found.videos, found.name);
+      state.stations.push({ id, number, name: found.name, skipShort: false, mode: "order", logo: "", videos: found.videos });
+      state.activeId = id;
+      panel = "playmode";
+      note = "";
+    }
+    tuned = null;
+    save();
+  } catch (error) {
+    note = error.message || "Couldn't add that.";
+  }
+  busy = false;
+  draw();
+}
+async function addLink(raw, ontoId) {
+  if (/archive\.org/i.test(String(raw || ""))) { await addArchive(raw, ontoId); return; }
+  const target = parseTarget(raw);
+  if (!target) { note = "Paste a YouTube video, channel, or playlist link."; draw(); return; }
+  busy = true; note = ""; draw();
+  try {
+    const found = await gather(target);
+    const onto = ontoId ? state.stations.find((item) => item.id === ontoId) : null;
+    if (onto) {
+      const have = new Set(onto.videos.map((video) => video.id));
+      const extra = found.videos.filter((video) => !have.has(video.id));
+      if (!extra.length) throw new Error("Those are already on this channel.");
+      tagSet(extra, found.name);
+      onto.videos = onto.videos.concat(extra);
+      state.activeId = onto.id;
+      note = `Added ${extra.length} to ${onto.name}.`;
+      panel = "channel";
+    } else {
+      const id = `s-${Date.now().toString(36)}`;
+      const number = state.stations.reduce((max, item) => Math.max(max, item.number), 1) + 1;
+      tagSet(found.videos, found.name);
+      state.stations.push({ id, number, name: found.name, skipShort: false, mode: "order", logo: "", videos: found.videos });
+      state.activeId = id;
+      panel = "playmode";
+      modePick = 0;
+      note = "";
+    }
+    addOnto = false;
+    save();
+  } catch (error) {
+    note = error.message || "Couldn't add that.";
+  } finally {
+    busy = false;
+    draw();
+  }
+}
+async function runSearch(query) {
+  busy = true; note = ""; draw();
+  try {
+    const home = await net("https://www.youtube.com/", "GET", HEADERS, "");
+    const key = (home.match(/"INNERTUBE_API_KEY":"([^"]+)"/) || [])[1];
+    const version = (home.match(/"INNERTUBE_CLIENT_VERSION":"([^"]+)"/) || [])[1];
+    const visitor = (home.match(/"visitorData":"([^"]+)"/) || [])[1] || "";
+    if (!key) throw new Error("Search couldn't reach YouTube.");
+    const body = JSON.stringify({ context: { client: { clientName: "WEB", clientVersion: version, hl: "en", gl: "US", visitorData: visitor } }, query });
+    const text = await net(`https://www.youtube.com/youtubei/v1/search?key=${encodeURIComponent(key)}`, "POST", { ...HEADERS, "content-type": "application/json", origin: "https://www.youtube.com" }, body);
+    const seen = new Set();
+    hits = [];
+    for (const match of text.matchAll(/"videoId":"([\w-]{11})"/g)) {
+      if (seen.has(match[1])) continue;
+      const slice = text.slice(match.index, match.index + 600);
+      const title = (slice.match(/"text":"((?:\\.|[^"\\]){3,140})"/) || [])[1];
+      if (!title) continue;
+      seen.add(match[1]);
+      hits.push({ title: unquote(title), url: `https://www.youtube.com/watch?v=${match[1]}` });
+      if (hits.length >= 8) break;
+    }
+    if (!hits.length) note = "Nothing matched.";
+  } catch (error) {
+    note = error.message || "Search didn't answer.";
+  } finally {
+    busy = false;
+    draw();
+  }
+}
+function playerLabel() {
+  if (playerId === "youtube") return "YouTube";
+  if (playerId === "guide") return "Jordan TV window";
+  const match = players.find((choice) => choice.id === playerId);
+  return match ? match.label : "YouTube";
+}
+function chooseMode(index) {
+  const current = active();
+  modePick = index ? 1 : 0;
+  if (current) current.mode = modePick ? "shuffle" : "order";
+  tuned = null;
+  panel = null;
+  save();
+  draw();
+}
+function filePlayerLabel() {
+  const match = filePlayers.find((choice) => choice.id === filePlayerId);
+  return match ? match.label : "Jordan TV";
+}
+function chooseFilePlayer(id) {
+  filePlayerId = id || "guide";
+  if (window.JordanTube && window.JordanTube.setArchivePlayer) window.JordanTube.setArchivePlayer(filePlayerId);
+  closePanel();
+}
+function openFilePlayers() {
+  try {
+    if (window.JordanTube && window.JordanTube.filePlayers) {
+      const parsed = JSON.parse(window.JordanTube.filePlayers() || "[]");
+      if (Array.isArray(parsed) && parsed.length) filePlayers = parsed;
+    }
+    if (window.JordanTube && window.JordanTube.archivePlayer) filePlayerId = window.JordanTube.archivePlayer() || filePlayerId;
+  } catch (e) { /* Keep the in-app choice. */ }
+  pickIndex = Math.max(0, filePlayers.findIndex((choice) => choice.id === filePlayerId));
+  panel = "fileplay";
+  if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+  draw();
+}
+function choosePlayer(id) {
+  playerId = id || "youtube";
+  localStorage.setItem("jordan-player", playerId);
+  if (window.JordanTube && window.JordanTube.setPlayer) window.JordanTube.setPlayer(playerId);
+  closePanel();
+}
+function openSettings() {
+  try {
+    if (window.JordanTube && window.JordanTube.players) {
+      const parsed = JSON.parse(window.JordanTube.players() || "[]");
+      if (Array.isArray(parsed) && parsed.length) players = parsed;
+    }
+  } catch (e) { /* Keep the in-app choice. */ }
+  pickIndex = Math.max(0, players.findIndex((choice) => choice.id === playerId));
+  panel = "player";
+  if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+  draw();
+}
+function openPanel(name) {
+  panel = name;
+  hits = [];
+  note = "";
+  formIndex = 0;
+  if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+  draw();
+}
+function ask(id, title, current) {
+  if (window.JordanTube && window.JordanTube.ask) window.JordanTube.ask(id, title || "Type", current || "");
+}
+window.onAsked = (id, text) => {
+  const value = (text || "").trim();
+  if (!value) return;
+  if (id === "link") { void addLink(value, addOnto && active() ? active().id : ""); return; }
+  if (id === "archive") { void addArchive(value, addOnto && active() ? active().id : ""); return; }
+  if (id === "find") { void runSearch(value); return; }
+  if (id === "logolink") {
+    const current = active();
+    if (current && window.JordanTube && window.JordanTube.fetchLogo) window.JordanTube.fetchLogo(current.id, value);
+    return;
+  }
+  if (id === "rename") {
+    const current = active();
+    if (current) current.name = value.slice(0, 32);
+    panel = "channel";
+    save();
+    draw();
+    return;
+  }
+  if (id === "retitle") {
+    const found = programVideo();
+    if (found) found.video.title = value.slice(0, 80);
+    panel = null;
+    save();
+    draw();
+    return;
+  }
+  if (window.JordanTube && window.JordanTube.cloudSave) {
+    window.JordanTube.cloudSave(id === "torbox" ? value : "", id === "traktid" ? value : "", id === "traktsecret" ? value : "");
+  }
+  note = "Saved.";
+  draw();
+};
+function phoneLink() {
+  if (!window.JordanTube || !window.JordanTube.phoneLink) return phoneUrl;
+  try {
+    phoneUrl = window.JordanTube.phoneLink(JSON.stringify(ordered().map((item) => ({ id: item.id, name: item.name, number: item.number })))) || "";
+  } catch (e) { /* Keep the last link. */ }
+  return phoneUrl;
+}
+function qrMarkup(link) {
+  if (!link || typeof qrcode !== "function") return "<p>Connect the TV to Wi-Fi to use the phone.</p>";
+  try {
+    const code = qrcode(0, "M");
+    code.addData(link);
+    code.make();
+    return `<div class="qr">${code.createSvgTag(3, 2)}</div>`;
+  } catch (e) { return ""; }
+}
+window.phoneCommand = (action, value) => {
+  if (action === "remove") {
+    state.stations = state.stations.filter((item) => item.id !== value);
+    if (state.activeId === value) state.activeId = state.stations[0] ? state.stations[0].id : "";
+    save();
+    draw();
+    return;
+  }
+  if (action === "logo") {
+    let parsed = null;
+    try { parsed = JSON.parse(value); } catch (e) { return; }
+    const station = state.stations.find((item) => item.id === (parsed && parsed.id));
+    if (!station || typeof parsed.logo !== "string" || parsed.logo.indexOf("data:image/") !== 0) return;
+    station.logo = parsed.logo;
+    note = "Logo saved for " + station.name + ".";
+    save();
+    draw();
+    return;
+  }
+  if (action !== "add") return;
+  let url = value;
+  let onto = "";
+  if (value && value.charAt(0) === "{") {
+    try {
+      const parsed = JSON.parse(value);
+      url = parsed.url || "";
+      onto = parsed.channel || "";
+    } catch (e) { /* A plain link still adds a new channel. */ }
+  }
+  void addLink(url, onto);
+};
+function exportSetup() {
+  rememberSpot();
+  const backup = {
+    app: "Jordan TV",
+    version: 1,
+    profile: { name: "Jordan", pin: "" },
+    lineup: { stations: state.stations, activeId: state.activeId, customized: true, resume: state.resume || null },
+    searches: []
+  };
+  if (window.JordanTube && window.JordanTube.saveSetup) window.JordanTube.saveSetup(JSON.stringify(backup));
+}
+function importSetup() {
+  if (window.JordanTube && window.JordanTube.importSetup) window.JordanTube.importSetup();
+}
+window.applyImport = (text) => {
+  let raw;
+  try { raw = JSON.parse(text); } catch (e) { note = "That file isn't a Jordan TV setup."; draw(); return; }
+  const stations = raw && raw.lineup && Array.isArray(raw.lineup.stations) ? raw.lineup.stations : (raw && Array.isArray(raw.stations) ? raw.stations : null);
+  if (!stations || !stations.length) { note = "That file isn't a Jordan TV setup."; draw(); return; }
+  const clean = stations.filter((item) => item && item.id && Array.isArray(item.videos)).map((item) => ({
+    id: String(item.id),
+    number: Number(item.number) || 1,
+    name: String(item.name || "Channel").slice(0, 32),
+    skipShort: !!item.skipShort,
+    fromStart: !!item.fromStart,
+    mode: item.mode === "shuffle" ? "shuffle" : "order",
+    logo: typeof item.logo === "string" ? item.logo : "",
+    videos: item.videos.filter((video) => video && video.id && video.title).map((video) => ({
+      id: video.id,
+      title: video.title,
+      durationSec: Number(video.durationSec) || 60,
+      kind: video.kind === "torbox" ? "torbox" : (video.kind === "archive" ? "archive" : "youtube"),
+      set: typeof video.set === "string" ? video.set : "",
+      setName: typeof video.setName === "string" ? video.setName : "",
+      file: video.kind === "archive" ? (video.file || "") : "",
+      query: video.query || "",
+      imdb: video.imdb || "",
+      year: Number(video.year) || 0,
+      season: Number(video.season) || 0,
+      episode: Number(video.episode) || 0
+    }))
+  })).filter((item) => item.videos.length);
+  if (!clean.length) { note = "That file has no channels."; draw(); return; }
+  state.stations = clean;
+  state.activeId = raw.lineup && raw.lineup.activeId ? raw.lineup.activeId : clean[0].id;
+  if (!state.stations.some((item) => item.id === state.activeId)) state.activeId = clean[0].id;
+  ensureSets(state.stations);
+  state.resume = raw.lineup && raw.lineup.resume && raw.lineup.resume.videoId ? raw.lineup.resume : null;
+  if (state.resume && state.stations.some((item) => item.id === state.resume.stationId)) {
+    state.activeId = state.resume.stationId;
+    tuned = { stationId: state.resume.stationId, videoId: state.resume.videoId, offset: Number(state.resume.offset) || 0, hold: true };
+  } else tuned = null;
+  panel = "menu";
+  note = "Imported " + clean.length + " channels.";
+  save();
+  draw();
+};
+function cloudState() {
+  try { return JSON.parse((window.JordanTube && window.JordanTube.cloudStatus && window.JordanTube.cloudStatus()) || "{}"); }
+  catch (e) { return {}; }
+}
+function cloudActions(status) {
+  const rows = [
+    { id: "torbox", label: status.torbox ? "Change Torbox key" : "Type Torbox key" },
+    { id: "traktid", label: status.traktApp ? "Change Trakt client id" : "Type Trakt client id" },
+    { id: "link", label: status.linked ? "Trakt linked" : "Link Trakt" }
+  ];
+  cloudLists.forEach((list) => rows.push({ id: "list:" + list.id, label: list.name + "  (" + list.count + ")" }));
+  return rows;
+}
+function openCloud() {
+  panel = "cloud";
+  cloudIndex = 0;
+  note = "";
+  if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+  if (window.JordanTube && window.JordanTube.traktLists) window.JordanTube.traktLists();
+  draw();
+}
+function runCloud(id) {
+  if (id === "torbox") { ask("torbox", "Torbox API key", ""); return; }
+  if (id === "traktid") { ask("traktid", "Trakt client id", ""); return; }
+  if (id === "traktsecret") { ask("traktsecret", "Trakt client secret", ""); return; }
+  if (id === "link") {
+    note = "Asking Trakt for a code.";
+    draw();
+    if (window.JordanTube && window.JordanTube.traktBegin) window.JordanTube.traktBegin();
+    return;
+  }
+  if (id && id.indexOf("list:") === 0) {
+    pendingList = id.slice(5);
+    note = "Loading that list.";
+    busy = true;
+    draw();
+    if (window.JordanTube && window.JordanTube.traktChannel) window.JordanTube.traktChannel(pendingList);
+  }
+}
+window.onLists = (text) => {
+  try { cloudLists = JSON.parse(text || "[]"); } catch (e) { cloudLists = []; }
+  if (panel === "cloud") draw();
+};
+window.onTraktCode = (code) => {
+  note = code ? "" : "Paste the Trakt client id first. There is no secret.";
+  draw();
+  if (code && !traktTimer) {
+    traktTimer = setInterval(() => { if (window.JordanTube && window.JordanTube.traktPoll) window.JordanTube.traktPoll(); }, 5000);
+  }
+};
+window.onTraktPoll = (status) => {
+  if (status !== "ok") return;
+  if (traktTimer) clearInterval(traktTimer);
+  traktTimer = 0;
+  note = "Trakt is linked. Pick a list.";
+  if (window.JordanTube && window.JordanTube.traktLists) window.JordanTube.traktLists();
+  draw();
+};
+window.onTraktChannel = (text) => {
+  busy = false;
+  let parsed = null;
+  try { parsed = JSON.parse(text || "{}"); } catch (e) { parsed = null; }
+  const videos = parsed && Array.isArray(parsed.videos) ? parsed.videos : [];
+  if (!videos.length) { note = "That list has nothing Jordan TV can play."; panel = "cloud"; draw(); return; }
+  const known = cloudLists.find((list) => list.id === pendingList);
+  const name = (known && known.name) || parsed.name || "Trakt";
+  const number = state.stations.reduce((max, item) => Math.max(max, item.number), 0) + 1;
+  const id = "trakt-" + (pendingList || Date.now());
+  const existing = state.stations.find((item) => item.id === id);
+  const station = { id, number: existing ? existing.number : number, name: String(name).slice(0, 32), skipShort: false, mode: "order", logo: "", videos };
+  if (existing) Object.assign(existing, station, { number: existing.number });
+  else state.stations.push(station);
+  state.activeId = id;
+  panel = null;
+  note = "";
+  tuned = null;
+  if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+  save();
+  draw();
+};
+function programVideo() {
+  if (!programTarget) return null;
+  const station = state.stations.find((item) => item.id === programTarget.stationId);
+  const video = station && station.videos.find((item) => item.id === programTarget.videoId);
+  return station && video ? { station, video } : null;
+}
+function openProgram() {
+  const station = active();
+  const show = station ? programAt(station, focusSlot) : null;
+  if (!station) return;
+  if (!show || !show.video) { openChannel(); return; }
+  programTarget = { stationId: station.id, videoId: show.video.id };
+  programIndex = 0;
+  panel = "program";
+  draw();
+}
+function runProgram(id) {
+  const found = programVideo();
+  if (!found) { closePanel(); return; }
+  if (id === "rename") {
+    ask("retitle", "Show name", found.video.title);
+    return;
+  }
+  if (id === "drop") {
+    found.station.videos = found.station.videos.filter((video) => video.id !== found.video.id);
+    if (tuned && tuned.videoId === found.video.id) tuned = null;
+    panel = null;
+    focusSlot = 0;
+    save();
+    draw();
+    return;
+  }
+  if (id === "set") {
+    const set = found.video.set;
+    const same = set ? found.station.videos.filter((video) => video.set === set) : [];
+    if (set && same.length > 1) found.station.videos = found.station.videos.filter((video) => video.set !== set);
+    else found.station.videos = found.station.videos.filter((video) => video.id !== found.video.id);
+    tuned = null;
+    if (state.resume && state.resume.stationId === found.station.id) state.resume = null;
+    panel = null;
+    focusSlot = 0;
+    save();
+    draw();
+    return;
+  }
+  if (id === "channel") openChannel();
+}
+function openChannel() {
+  panel = "channel";
+  channelIndex = 0;
+  draw();
+}
+function runChannel(id) {
+  const current = active();
+  if (!current) return;
+  if (id === "more") { addOnto = true; note = ""; openPanel("add"); return; }
+  if (id === "skip") { current.skipShort = !current.skipShort; save(); draw(); return; }
+  if (id === "shuffle") { current.mode = current.mode === "shuffle" ? "order" : "shuffle"; state.shuffleAt = Date.now(); tuned = null; save(); draw(); return; }
+  if (id === "begin") { current.fromStart = !current.fromStart; tuned = null; save(); draw(); return; }
+  if (id === "logolink") { ask("logolink", "Image link", ""); return; }
+  if (id === "logofile") {
+    if (window.JordanTube && window.JordanTube.pickLogo) window.JordanTube.pickLogo(current.id);
+    return;
+  }
+  if (id === "rename") {
+    panel = "rename";
+    formIndex = 0;
+    draw();
+    ask("rename", "Channel name", current.name);
+    return;
+  }
+  if (id === "remove") { confirmYes = false; panel = "confirm"; draw(); }
+}
+function markPick(selector, index) {
+  const nodes = document.querySelectorAll(selector);
+  nodes.forEach((node, i) => node.classList.toggle("pick", i === index));
+  if (nodes[index] && nodes[index].parentElement) {
+    const box = nodes[index].parentElement.getBoundingClientRect();
+    const pick = nodes[index].getBoundingClientRect();
+    if (pick.top < box.top) nodes[index].parentElement.scrollTop -= box.top - pick.top;
+    else if (pick.bottom > box.bottom) nodes[index].parentElement.scrollTop += pick.bottom - box.bottom;
+  }
+}
+function openMenu() {
+  panel = "menu";
+  menuIndex = 0;
+  confirmYes = false;
+  if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+  draw();
+}
+function runMenu(id) {
+  const current = active();
+  if (id === "air") {
+    state.onAir = !state.onAir;
+    save();
+    if (!state.onAir) leaveAir();
+    else bumpAir();
+    draw();
+    return;
+  }
+  if (id === "player") { openSettings(); return; }
+  if (id === "archive") { openFilePlayers(); return; }
+  if (id === "add") { addOnto = false; note = ""; openPanel("add"); return; }
+  if (id === "find") { openPanel("find"); return; }
+  if (id === "export") { exportSetup(); return; }
+  if (id === "import") { importSetup(); return; }
+  if (id === "cloud") { openCloud(); }
+}
+function removeCurrent() {
+  const current = active();
+  if (!current) { closePanel(); return; }
+  state.stations = state.stations.filter((station) => station.id !== current.id);
+  state.activeId = state.stations[0] ? state.stations[0].id : "";
+  panel = null;
+  save();
+  draw();
+}
+function backOne() {
+  if (panel === "rename" || panel === "confirm") {
+    panel = "channel";
+    if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+    draw();
+    return;
+  }
+  if (panel === "player" || panel === "fileplay" || panel === "add" || panel === "find") {
+    panel = "menu";
+    if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+    draw();
+    return;
+  }
+  closePanel();
+}
+function closePanel() {
+  panel = null;
+  if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+  draw();
+  bumpAir();
+}
+function bumpAir() {
+  clearTimeout(airTimer);
+  if (!state.onAir || onAir || panel || away) return;
+  airTimer = setTimeout(enterAir, 60000);
+}
+function airMark() {
+  const station = onAir ? active() : null;
+  if (!window.JordanTube || !window.JordanTube.airMark) return;
+  window.JordanTube.airMark(station && station.logo ? station.logo : "", station ? station.number + "  " + station.name : "");
+}
+function enterAir() {
+  clearTimeout(airTimer);
+  if (!state.onAir || onAir || panel || away) return;
+  const station = active();
+  const show = station ? currentShow(station) : null;
+  if (!station || !show || !show.video) return;
+  onAir = true;
+  draw();
+}
+function leaveAir() {
+  if (!onAir) {
+    airMark();
+    return;
+  }
+  onAir = false;
+  document.body.classList.remove("is-air");
+  if (window.JordanTube && window.JordanTube.stopAmbient) window.JordanTube.stopAmbient();
+  draw();
+  bumpAir();
+}
+function playCurrent() {
+  const item = active();
+  const show = item ? airing(item, now) : null;
+  if (!show) return;
+  if (window.JordanTube && window.JordanTube.watch) window.JordanTube.watch(show.video.id, show.offset);
+}
+function ordered() { return state.stations.slice().sort((a, b) => a.number - b.number); }
+function tune(index) {
+  const list = ordered();
+  if (!list.length) return;
+  const next = Math.max(0, Math.min(list.length - 1, index));
+  state.activeId = list[next].id;
+  focusSlot = 0;
+  playing = null;
+  tuned = null;
+  held = null;
+  save();
+  draw();
+}
+window.onRemote = (key) => {
+  if (onAir) { leaveAir(); return; }
+  bumpAir();
+  if (away && key === "back") {
+    openFull = false;
+    const station = active();
+    const played = window.JordanTube && window.JordanTube.played ? Number(window.JordanTube.played()) || 0 : 0;
+    if (window.JordanTube && window.JordanTube.hidePlayer) window.JordanTube.hidePlayer();
+    const video = document.getElementById("player");
+    if (video) video.dataset.file = "";
+    if (station && held && held.id && played > 1) tuned = { stationId: station.id, videoId: held.id, offset: played, hold: true };
+    away = false;
+    draw();
+    return;
+  }
+  if (panel === "playmode") {
+    if (key === "down" || key === "up") { modePick = modePick ? 0 : 1; draw(); return; }
+    if (key === "ok") chooseMode(modePick);
+    if (key === "back") { panel = null; draw(); }
+    return;
+  }
+  if (panel === "player" || panel === "fileplay") {
+    const list = panel === "fileplay" ? filePlayers : players;
+    const picked = panel === "fileplay" ? "[data-fileplayer]" : "[data-player]";
+    if (key === "down" || key === "up") {
+      pickIndex = key === "down" ? Math.min(list.length - 1, pickIndex + 1) : Math.max(0, pickIndex - 1);
+      markPick(picked, pickIndex);
+      return;
+    }
+    if (key === "ok") {
+      if (panel === "fileplay") chooseFilePlayer(list[pickIndex] && list[pickIndex].id);
+      else choosePlayer(list[pickIndex] && list[pickIndex].id);
+    }
+    if (key === "back" || key === "left") backOne();
+    return;
+  }
+  if (panel === "confirm") {
+    if (key === "left" || key === "right" || key === "up" || key === "down") { confirmYes = !confirmYes; draw(); return; }
+    if (key === "ok") { if (confirmYes) removeCurrent(); else backOne(); }
+    if (key === "back") backOne();
+    return;
+  }
+  if (panel === "program") {
+    if (key === "down" || key === "up") {
+      programIndex = key === "down" ? Math.min(PROGRAM.length - 1, programIndex + 1) : Math.max(0, programIndex - 1);
+      markPick("[data-program]", programIndex);
+      return;
+    }
+    if (key === "ok") runProgram(PROGRAM[programIndex]);
+    if (key === "back" || key === "left") closePanel();
+    return;
+  }
+  if (panel === "channel") {
+    if (key === "down" || key === "up") {
+      channelIndex = key === "down" ? Math.min(CHANNEL.length - 1, channelIndex + 1) : Math.max(0, channelIndex - 1);
+      markPick("[data-channel]", channelIndex);
+      return;
+    }
+    if (key === "ok") runChannel(CHANNEL[channelIndex]);
+    if (key === "back" || key === "left") closePanel();
+    return;
+  }
+  if (panel === "menu") {
+    if (key === "down" || key === "up") {
+      menuIndex = key === "down" ? Math.min(MENU.length - 1, menuIndex + 1) : Math.max(0, menuIndex - 1);
+      markPick("[data-menu]", menuIndex);
+      return;
+    }
+    if (key === "ok") runMenu(MENU[menuIndex]);
+    if (key === "back" || key === "left") closePanel();
+    return;
+  }
+  if (panel === "cloud") {
+    const actions = cloudActions(cloudState());
+    if (key === "down" || key === "up") {
+      cloudIndex = key === "down" ? Math.min(actions.length - 1, cloudIndex + 1) : Math.max(0, cloudIndex - 1);
+      markPick("[data-cloud]", cloudIndex);
+      return;
+    }
+    if (key === "ok") runCloud(actions[cloudIndex] && actions[cloudIndex].id);
+    if (key === "back" || key === "left") {
+      if (traktTimer) clearInterval(traktTimer);
+      traktTimer = 0;
+      if (window.JordanTube && window.JordanTube.setTyping) window.JordanTube.setTyping(false);
+      closePanel();
+    }
+    return;
+  }
+  if (panel === "add" || panel === "find" || panel === "rename") {
+    const nodes = Array.from(document.querySelectorAll(".sheet button"));
+    if (key === "down" || key === "up") {
+      formIndex = key === "down" ? Math.min(Math.max(nodes.length - 1, 0), formIndex + 1) : Math.max(0, formIndex - 1);
+      nodes.forEach((node, index) => node.classList.toggle("pick", index === formIndex));
+      return;
+    }
+    if (key === "ok" && nodes[formIndex]) nodes[formIndex].click();
+    if (key === "back" || key === "left") backOne();
+    return;
+  }
+  if (panel) {
+    if (key === "back") backOne();
+    return;
+  }
+  if (key === "hold") {
+    if (!panel && zone === "rows" && active()) openProgram();
+    return;
+  }
+  if (key === "menu") {
+    if (!panel && zone === "rows" && active()) openChannel();
+    return;
+  }
+  if (key === "back" && full) { full = false; draw(); return; }
+  const list = ordered();
+  const index = Math.max(0, list.findIndex((item) => item.id === state.activeId));
+  if (key === "down") {
+    if (zone === "bar") return;
+    if (index >= list.length - 1) { zone = "bar"; draw(); }
+    else tune(index + 1);
+    return;
+  }
+  if (key === "up") {
+    if (zone === "bar") { zone = "rows"; draw(); }
+    else tune(index - 1);
+    return;
+  }
+  if (key === "left") {
+    if (zone === "bar") {
+      if (state.onAir) { barPick = 0; draw(); return; }
+      zone = "rows";
+      draw();
+      return;
+    }
+    focusSlot = Math.max(0, focusSlot - 1);
+    draw();
+    return;
+  }
+  if (key === "right") {
+    if (zone === "bar") {
+      if (state.onAir) { barPick = 1; draw(); }
+      return;
+    }
+    const shown = active();
+    const maxSlot = shown ? Math.max(0, blocks(shown).length - 1) : 0;
+    focusSlot = Math.min(maxSlot, focusSlot + 1);
+    draw();
+    return;
+  }
+  if (key === "ok") {
+    if (zone === "bar") {
+      if (state.onAir && barPick === 1) { enterAir(); return; }
+      openMenu();
+      return;
+    }
+    handOff();
+  }
+  if (key === "back" && zone === "bar") { zone = "rows"; draw(); }
+};
+window.guideBack = () => { window.onRemote("back"); return true; };
+document.addEventListener("keydown", (event) => {
+  const map = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right", Enter: "ok", Escape: "back", Backspace: "back" };
+  const key = map[event.key];
+  if (!key || panel === "add" || panel === "find" || panel === "rename") return;
+  event.preventDefault();
+  window.onRemote(key);
+});
+if (window.JordanTube && window.JordanTube.player) {
+  const saved = window.JordanTube.player();
+  if (saved) playerId = saved;
+}
+if (window.JordanTube && window.JordanTube.players) {
+  try {
+    const parsed = JSON.parse(window.JordanTube.players() || "[]");
+    if (Array.isArray(parsed) && parsed.length) players = parsed;
+  } catch (e) { /* The window stays the player. */ }
+}
+window.nextOnPlaylist = nextOnPlaylist;
+draw();
+bumpAir();
+</script>
+</body>
+</html>
