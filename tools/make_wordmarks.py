@@ -187,6 +187,31 @@ def e_planet(d, b, f, l, a):
     d.arc((cx - r, cy - r * .35, cx + r, cy + r * .35), -20, 200, fill=l, width=LW * 2)
     d.arc((cx - r, cy - r * .35, cx + r, cy + r * .35), -20, 200, fill=a, width=LW)
 
+
+def e_pumpkin(d, b, f, l, a):
+    cx, cy, r = _c(b)
+    # pumpkin body
+    d.ellipse((cx - r * .95, cy - r * .55, cx + r * .95, cy + r * .95), fill=f, outline=l, width=LW)
+    d.ellipse((cx - r * .7, cy - r * .6, cx + r * .7, cy + r * .95), fill=f, outline=l, width=max(LW//2, 2))
+    # stem
+    d.rounded_rectangle((cx - r * .12, cy - r * .95, cx + r * .12, cy - r * .45), radius=4 * S, fill=a, outline=l, width=LW // 2)
+    # jack-o-lantern face
+    d.polygon([(cx - r * .45, cy - r * .15), (cx - r * .15, cy - r * .15), (cx - r * .3, cy + r * .08)], fill=l)
+    d.polygon([(cx + r * .15, cy - r * .15), (cx + r * .45, cy - r * .15), (cx + r * .3, cy + r * .08)], fill=l)
+    d.polygon([(cx - r * .35, cy + r * .35), (cx - r * .2, cy + r * .18), (cx + r * .2, cy + r * .18), (cx + r * .35, cy + r * .35), (cx, cy + r * .5)], fill=l)
+
+def e_frog(d, b, f, l, a):
+    cx, cy, r = _c(b)
+    # head
+    d.ellipse((cx - r * .85, cy - r * .35, cx + r * .85, cy + r * .85), fill=f, outline=l, width=LW)
+    # eyes
+    for x in (-.42, .42):
+        d.ellipse((cx + x * r - r * .32, cy - r * .95, cx + x * r + r * .32, cy - r * .15), fill=f, outline=l, width=LW)
+        d.ellipse((cx + x * r - r * .16, cy - r * .72, cx + x * r + r * .16, cy - r * .32), fill=l)
+        d.ellipse((cx + x * r - r * .06, cy - r * .62, cx + x * r + r * .06, cy - r * .44), fill=a)
+    # smile
+    d.arc((cx - r * .55, cy + r * .05, cx + r * .55, cy + r * .7), 20, 160, fill=l, width=LW)
+
 def e_blocks(d, b, f, l, a):
     cx, cy, r = _c(b)
     for (x, y, sz, c, t) in ((-.5, .5, .94, f, "A"), (.5, .5, .94, a, "B"), (0, -.48, .94, (90, 200, 255), "C")):
@@ -230,6 +255,8 @@ SPECS = [
  ("saturday-morning","Retro Saturday Morning","SAT MORNING","",WHITE,(30,60,160),(255,200,0),e_sun),
  ("preschool","Preschool","PRESCHOOL","",(255,225,70),(110,30,140),(255,95,120),e_blocks),
  ("90s-classics","90s Classics","90s CLASSICS","",(255,220,70),(70,15,120),(255,90,180),e_popcorn),
+    ("halloween","Halloween","HALLOWEEN","",(255,145,40),(40,8,70),(250,230,90),e_pumpkin),
+    ("muppets","Muppets","MUPPETS","",(80,200,70),(12,50,18),(255,220,50),e_frog),
 ]
 
 def fit(text, maxw, maxh):
