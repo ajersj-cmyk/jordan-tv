@@ -188,6 +188,14 @@ def e_planet(d, b, f, l, a):
     d.arc((cx - r, cy - r * .35, cx + r, cy + r * .35), -20, 200, fill=a, width=LW)
 
 
+def e_ball(d, b, f, l, a):
+    cx, cy, r = _c(b)
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=f, outline=l, width=LW)
+    d.line((cx, cy - r + LW, cx, cy + r - LW), fill=l, width=max(LW // 2, 2))
+    d.arc((cx - r, cy - r * .45, cx + r, cy + r * .45), 200, 340, fill=l, width=LW)
+    d.arc((cx - r, cy - r * .45, cx + r, cy + r * .45), 20, 160, fill=l, width=LW)
+    d.polygon(star_pts(cx, cy, r * .28), fill=a)
+
 def e_pumpkin(d, b, f, l, a):
     cx, cy, r = _c(b)
     # pumpkin body
@@ -257,6 +265,8 @@ SPECS = [
  ("90s-classics","90s Classics","90s CLASSICS","",(255,220,70),(70,15,120),(255,90,180),e_popcorn),
     ("halloween","Halloween","HALLOWEEN","",(255,145,40),(40,8,70),(250,230,90),e_pumpkin),
     ("muppets","Muppets","MUPPETS","",(80,200,70),(12,50,18),(255,220,50),e_frog),
+    ("sports-movies","Sports Movie Night","SPORTS MOVIES","",(255,220,60),(15,45,20),(255,255,255),e_ball),
+    ("sitcoms","Sitcoms","SITCOMS","",(255,230,140),(70,20,100),(80,210,255),e_tv),
 ]
 
 def fit(text, maxw, maxh):
